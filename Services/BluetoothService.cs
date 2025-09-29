@@ -148,15 +148,26 @@ public class BluetoothService : IBluetoothService
 
     private void OnDeviceAdvertised(object? sender, DeviceEventArgs e)
     {
+        // Extract the best possible name from the device
+        string deviceName = "Unknown";
+        
+        if (!string.IsNullOrWhiteSpace(e.Device.Name))
+        {
+            deviceName = e.Device.Name.Trim();
+        }
+        
         var bleDevice = new BleDevice
         {
             Id = e.Device.Id.ToString(),
-            Name = !string.IsNullOrWhiteSpace(e.Device.Name) ? e.Device.Name : "Unknown",
+            Name = deviceName,
             MacAddress = e.Device.Id.ToString(), // BLE device ID is often the MAC address
             RssiValue = e.Device.Rssi,
             Device = e.Device,
             LastSeen = DateTime.Now
         };
+
+        // Log device discovery for debugging
+        System.Diagnostics.Debug.WriteLine($"Device discovered: Name='{deviceName}', ID={e.Device.Id}, RSSI={e.Device.Rssi}");
 
         DeviceDiscovered?.Invoke(this, bleDevice);
     }
