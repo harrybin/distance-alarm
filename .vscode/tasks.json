@@ -1,0 +1,386 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "🤖 Android Debug",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "-f",
+                "net9.0-android",
+                "-c",
+                "Debug",
+                "--no-restore",
+                "-v",
+                "minimal"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "options": {
+                "statusbar": {
+                    "color": "#1B5E20"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Build for Android devices (Debug)"
+        },
+        {
+            "label": "🚀 Android Release",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "-f",
+                "net9.0-android",
+                "-c",
+                "Release"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#1B5E20"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Build for Android devices (Release)"
+        },
+        {
+            "label": "📱 Install Android",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "-f",
+                "net9.0-android",
+                "-c",
+                "Debug",
+                "-t:Run",
+                "--no-restore",
+                "-v",
+                "minimal"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#1B5E20"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Install on connected Android device",
+            "dependsOn": "🤖 Android Debug"
+        },
+        {
+            "label": "⌚ Install Wear OS",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "-f",
+                "net9.0-android",
+                "-c",
+                "Debug",
+                "-t:Run",
+                "-p:WearOSTarget=true"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#1A237E"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Install on connected Wear OS device",
+            "dependsOn": "🤖 Android Debug"
+        },
+        {
+            "label": "📦 Deploy Android APK",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "publish",
+                "-f",
+                "net9.0-android",
+                "-c",
+                "Release",
+                "-p:AndroidPackageFormat=apk",
+                "-o",
+                "./bin/Release/net9.0-android/publish/"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#1B5E20"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Create APK for Android device"
+        },
+        {
+            "label": "📦 Deploy Wear OS APK",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "publish",
+                "-f",
+                "net9.0-android",
+                "-c",
+                "Release",
+                "-p:AndroidPackageFormat=apk",
+                "-p:WearOSTarget=true",
+                "-o",
+                "./bin/Release/net9.0-android/publish/"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#1A237E"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Create APK for Wear OS device"
+        },
+        {
+            "label": "🧹 Clean",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "clean"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#B71C1C"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Clean all build outputs"
+        },
+        {
+            "label": "📥 Restore Packages",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "restore"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#006064"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Restore NuGet packages"
+        },
+        {
+            "label": "📱 Check Devices",
+            "type": "shell",
+            "command": "adb",
+            "args": [
+                "devices",
+                "-l"
+            ],
+            "group": "test",
+            "options": {
+                "statusbar": {
+                    "color": "#B71C1C"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "detail": "List connected Android/Wear OS devices"
+        },
+        {
+            "label": "🔧 Install APK (Android)",
+            "type": "shell",
+            "command": "adb",
+            "args": [
+                "install",
+                "-r",
+                "./bin/Release/net9.0-android/publish/com.distancealarm.app-Signed.apk"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#1B5E20"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "detail": "Install APK via ADB on Android device",
+            "dependsOn": "📦 Deploy Android APK"
+        },
+        {
+            "label": "🔧 Install APK (Wear OS)",
+            "type": "shell",
+            "command": "adb",
+            "args": [
+                "-d",
+                "install",
+                "-r",
+                "./bin/Release/net9.0-android/publish/com.distancealarm.app-Signed.apk"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#1A237E"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "detail": "Install APK via ADB on Wear OS device",
+            "dependsOn": "📦 Deploy Wear OS APK"
+        },
+        {
+            "label": "⚡ Fast Android Build",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "-f",
+                "net9.0-android",
+                "-c",
+                "Debug",
+                "--no-restore",
+                "--no-dependencies",
+                "-v",
+                "quiet",
+                "-p:AndroidFastDeploymentType=Assemblies",
+                "-p:EmbedAssembliesIntoApk=false"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#4CAF50"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Ultra-fast Android build for development"
+        },
+        {
+            "label": "⚡ Incremental Deploy",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "-f",
+                "net9.0-android",
+                "-c",
+                "Debug",
+                "-t:Run",
+                "--no-restore",
+                "-v",
+                "quiet",
+                "-p:AndroidFastDeploymentType=Assemblies"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#FF9800"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$msCompile",
+            "detail": "Fast incremental deployment to Android device"
+        }
+    ]
+}

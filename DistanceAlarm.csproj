@@ -1,0 +1,152 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net9.0-android</TargetFrameworks>
+		<!-- Focus on Android and Wear OS support primarily -->
+
+		<!-- Define MAUI Version explicitly -->
+		<MauiVersion>9.0.21</MauiVersion>
+
+		<!-- Explicitly disable Windows App SDK for Android builds -->
+		<UseWindowsAppSDK Condition="'$(TargetFramework)' == 'net9.0-android'">false</UseWindowsAppSDK>
+		<EnableWindowsTargeting Condition="'$(TargetFramework)' == 'net9.0-android'">false</EnableWindowsTargeting>
+		<!-- Focus on Android and Wear OS support primarily -->
+		<!-- <TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks> -->
+
+		<!-- Note for MacCatalyst:
+		The default runtime is maccatalyst-x64, except in Release config, in which case the default is
+		maccatalyst-x64;maccatalyst-arm64.
+		When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular
+		<RuntimeIdentifier>.
+		The Mac App Store will NOT accept apps with ONLY maccatalyst-arm64 indicated;
+		either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
+		<!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
+
+		<OutputType>Exe</OutputType>
+		<RootNamespace>DistanceAlarm</RootNamespace>
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<!-- Display name -->
+		<ApplicationTitle>Distance Alarm</ApplicationTitle>
+
+		<!-- App Identifier -->
+		<ApplicationId>com.distancealarm.app</ApplicationId>
+
+		<!-- Versions -->
+		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<ApplicationVersion>1</ApplicationVersion>
+
+		<!-- To develop, package, and publish an app to the Microsoft Store, see:
+		https://aka.ms/MauiTemplateUnpackaged -->
+		<!-- <WindowsPackageType>None</WindowsPackageType> -->
+
+		<!-- Build Performance Optimizations -->
+		<AndroidEnableMultiDex>true</AndroidEnableMultiDex>
+		<AndroidUseAapt2>true</AndroidUseAapt2>
+		<AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+		<AndroidLinkMode>SdkOnly</AndroidLinkMode>
+		<AndroidLinkSkip />
+		<EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+		<BundleAssemblies>false</BundleAssemblies>
+
+		<!-- Java compilation fixes -->
+		<AndroidEnableDesugar>true</AndroidEnableDesugar>
+		<AndroidDexTool>d8</AndroidDexTool>
+
+		<!-- Development Build Speed Optimizations -->
+		<AndroidIncludeDebugSymbols>false</AndroidIncludeDebugSymbols>
+		<DebugType>portable</DebugType>
+		<AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
+		<!-- <AndroidFastDeploymentType>Assemblies</AndroidFastDeploymentType> -->
+
+		<!-- Disable unnecessary features during development -->
+		<!-- <AndroidGenerateResourceDesigner>false</AndroidGenerateResourceDesigner> -->
+		<AndroidGenerateResourceDesigner>true</AndroidGenerateResourceDesigner>
+		<AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+		<AndroidUseLatestPlatformSdk>false</AndroidUseLatestPlatformSdk>
+
+		<SupportedOSPlatformVersion
+			Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+			15.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion
+			Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+			15.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion
+			Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+			24.0</SupportedOSPlatformVersion>
+		<!-- <SupportedOSPlatformVersion
+			Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+			10.0.17763.0</SupportedOSPlatformVersion>
+		<TargetPlatformMinVersion
+			Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+			10.0.17763.0</TargetPlatformMinVersion> -->
+		<SupportedOSPlatformVersion
+			Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">
+			6.5</SupportedOSPlatformVersion>
+	</PropertyGroup>
+
+	<!-- Wear OS specific configurations -->
+	<PropertyGroup Condition="$(WearOSTarget) == 'true'">
+		<AndroidApplication>true</AndroidApplication>
+		<AndroidResgenClass>Resource</AndroidResgenClass>
+		<AndroidManifest>Platforms\Android\AndroidManifest.xml</AndroidManifest>
+		<AndroidUseAapt2>true</AndroidUseAapt2>
+		<AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		<!-- Wear OS typically uses smaller screens and different hardware -->
+		<DefineConstants>$(DefineConstants);WEAR_OS</DefineConstants>
+	</PropertyGroup>
+
+	<!-- Debug Configuration Optimizations -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+		<AndroidLinkMode>None</AndroidLinkMode>
+		<AndroidEnableProguard>false</AndroidEnableProguard>
+		<AndroidDexTool>d8</AndroidDexTool>
+		<AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
+		<EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+		<!-- <AndroidFastDeploymentType>Assemblies</AndroidFastDeploymentType> -->
+		<MonoSymbolArchive>false</MonoSymbolArchive>
+	</PropertyGroup>
+
+	<!-- Release Configuration Optimizations -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<AndroidLinkMode>SdkOnly</AndroidLinkMode>
+		<AndroidEnableProguard>true</AndroidEnableProguard>
+		<AndroidDexTool>d8</AndroidDexTool>
+		<AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+		<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+		<AndroidPackageFormat>aab</AndroidPackageFormat>
+		<MonoSymbolArchive>true</MonoSymbolArchive>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- App Icon -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg"
+			ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+
+		<!-- Splash Screen -->
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+
+		<!-- Images -->
+		<MauiImage Include="Resources\Images\*" />
+		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
+
+		<!-- Custom Fonts -->
+		<MauiFont Include="Resources\Fonts\*" />
+
+		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.5" />
+		<PackageReference Include="Plugin.BLE" Version="3.1.0" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="Microsoft.Maui.Essentials" Version="$(MauiVersion)" />
+	</ItemGroup>
+
+</Project>

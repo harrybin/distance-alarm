@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:DistanceAlarm.ViewModels"
+             xmlns:models="clr-namespace:DistanceAlarm.Models"
+             x:Class="DistanceAlarm.MainPage"
+             x:DataType="viewmodels:MainViewModel"
+             Title="Distance Alarm">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="25" Padding="30,0">
+
+            <!-- Status Section -->
+            <Frame BackgroundColor="{AppThemeBinding Light=LightGray, Dark=DarkGray}" Padding="20">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Connection Status" 
+                           FontSize="18" 
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+                    
+                    <Label Text="{Binding StatusMessage}" 
+                           FontSize="16"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                    
+                    <Label Text="{Binding ConnectionState.ConnectedDevice.DisplayName, StringFormat='Connected to: {0}'}"
+                           FontSize="14"
+                           HorizontalOptions="Center"
+                           IsVisible="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNotNullConverter}}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Control Buttons -->
+            <VerticalStackLayout Spacing="15">
+                <Button Text="Start Scanning" 
+                        Command="{Binding StartScanCommand}"
+                        IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"
+                        BackgroundColor="DodgerBlue" />
+                
+                <Button Text="Stop Scanning" 
+                        Command="{Binding StopScanCommand}"
+                        IsEnabled="{Binding IsScanning}"
+                        BackgroundColor="Orange" />
+                
+                <Button Text="Disconnect" 
+                        Command="{Binding DisconnectCommand}"
+                        IsEnabled="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNotNullConverter}}"
+                        BackgroundColor="Crimson" />
+                
+                <Button Text="Test Alarm" 
+                        Command="{Binding TestAlarmCommand}"
+                        BackgroundColor="Purple" />
+            </VerticalStackLayout>
+
+            <!-- Discovered Devices -->
+            <Frame BackgroundColor="{AppThemeBinding Light=LightGray, Dark=DarkGray}" Padding="20">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Discovered Devices" 
+                           FontSize="18" 
+                           FontAttributes="Bold" />
+                    
+                    <ActivityIndicator IsRunning="{Binding IsScanning}" 
+                                     HorizontalOptions="Center"
+                                     IsVisible="{Binding IsScanning}" />
+                    
+                    <CollectionView ItemsSource="{Binding DiscoveredDevices}" 
+                                  MaximumHeightRequest="300">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:BleDevice">
+                                <Grid Padding="10" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                                    <Label Grid.Row="0" Grid.Column="0"
+                                           Text="{Binding DisplayName}" 
+                                           FontSize="16" 
+                                           FontAttributes="Bold" />
+                                    
+                                    <Label Grid.Row="1" Grid.Column="0"
+                                           Text="{Binding SignalStrength}" 
+                                           FontSize="12" 
+                                           TextColor="Gray" />
+                                    
+                                    <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                                            Text="Connect"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ConnectToDeviceCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="Green"
+                                            Padding="10,5" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

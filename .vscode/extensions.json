@@ -1,0 +1,17 @@
+{
+    "recommendations": [
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.dotnet-maui",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "ms-vscode.vscode-json",
+        "ms-vscode.xml",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "ms-vscode.powershell",
+        "formulahendry.auto-rename-tag",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.hexeditor",
+        "actboy168.tasks"
+    ],
+    "unwantedRecommendations": []
+}

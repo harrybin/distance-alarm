@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "🤖 Debug Android",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/Debug/net9.0-android/DistanceAlarm.dll",
+            "preLaunchTask": "🤖 Android Debug"
+        },
+        {
+            "name": "⌚ Debug Wear OS",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/Debug/net9.0-android/DistanceAlarm.dll",
+            "env": {
+                "WEAR_OS_TARGET": "true"
+            },
+            "preLaunchTask": "🤖 Android Debug"
+        }
+    ]
+}

@@ -1,0 +1,55 @@
+<Project>
+    <PropertyGroup>
+        <!-- Global Build Performance Settings -->
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+
+        <!-- MSBuild Performance -->
+        <!-- <MSBuildEnableWorkloadResolver>false</MSBuildEnableWorkloadResolver> -->
+        <UseSharedCompilation>true</UseSharedCompilation>
+        <BuildInParallel>true</BuildInParallel>
+        <MaxCpuCount>0</MaxCpuCount>
+
+        <!-- .NET Performance -->
+        <TieredCompilation>true</TieredCompilation>
+        <TieredPGO>true</TieredPGO>
+
+        <!-- Android Build Performance -->
+        <AndroidEnableDesugar>true</AndroidEnableDesugar>
+        <AndroidEnableMultiDex>true</AndroidEnableMultiDex>
+        <AndroidDexTool>d8</AndroidDexTool>
+
+        <!-- Skip unnecessary steps during development -->
+        <SkipCopyLocalReference>true</SkipCopyLocalReference>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <!-- Debug-specific optimizations -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>portable</DebugType>
+        <Optimize>false</Optimize>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+
+        <!-- Android Debug Optimizations -->
+        <AndroidLinkMode>None</AndroidLinkMode>
+        <AndroidEnableProguard>false</AndroidEnableProguard>
+        <AndroidIncludeDebugSymbols>false</AndroidIncludeDebugSymbols>
+        <MonoSymbolArchive>false</MonoSymbolArchive>
+        <!-- <AndroidFastDeploymentType>Assemblies</AndroidFastDeploymentType> -->
+    </PropertyGroup>
+
+    <!-- Release-specific optimizations -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <DebugSymbols>false</DebugSymbols>
+        <DebugType>none</DebugType>
+        <Optimize>true</Optimize>
+        <DefineConstants>TRACE</DefineConstants>
+
+        <!-- Android Release Optimizations -->
+        <AndroidLinkMode>SdkOnly</AndroidLinkMode>
+        <AndroidEnableProguard>true</AndroidEnableProguard>
+        <AndroidIncludeDebugSymbols>true</AndroidIncludeDebugSymbols>
+        <MonoSymbolArchive>true</MonoSymbolArchive>
+    </PropertyGroup>
+</Project>

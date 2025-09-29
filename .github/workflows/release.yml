@@ -1,0 +1,297 @@
+name: 🚀 Release Build & Deploy
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Release version (e.g., v1.0.0)"
+                required: true
+                type: string
+            release_notes:
+                description: "Release notes"
+                required: false
+                type: string
+                default: "New release with improvements and bug fixes"
+            create_release:
+                description: "Create GitHub Release"
+                required: true
+                type: boolean
+                default: true
+            prerelease:
+                description: "Mark as pre-release"
+                required: false
+                type: boolean
+                default: false
+
+env:
+    DOTNET_VERSION: "9.0.x"
+    PROJECT_PATH: "./DistanceAlarm.csproj"
+    APP_NAME: "DistanceAlarm"
+    PACKAGE_ID: "com.distancealarm.app"
+
+jobs:
+    approval:
+        name: 🔐 Release Approval
+        runs-on: ubuntu-latest
+        environment:
+            name: release-approval
+            url: https://github.com/${{ github.repository }}/releases
+
+        steps:
+            - name: 📋 Approval Required
+              run: |
+                  echo "## 🎯 Release Build Request" >> $GITHUB_STEP_SUMMARY
+                  echo "**Version:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+                  echo "**Release Notes:** ${{ inputs.release_notes }}" >> $GITHUB_STEP_SUMMARY
+                  echo "**Create Release:** ${{ inputs.create_release }}" >> $GITHUB_STEP_SUMMARY
+                  echo "**Pre-release:** ${{ inputs.prerelease }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "⏳ Waiting for approval to proceed with release build..." >> $GITHUB_STEP_SUMMARY
+
+    build-android-release:
+        name: 📱 Build Android Release
+        runs-on: ubuntu-latest
+        needs: approval
+
+        steps:
+            - name: 📥 Checkout Code
+              uses: actions/checkout@v4
+
+            - name: 🔧 Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: ${{ env.DOTNET_VERSION }}
+
+            - name: 📱 Setup Android SDK
+              uses: android-actions/setup-android@v3
+              with:
+                  api-level: 34
+                  build-tools: 34.0.0
+
+            - name: 🛠️ Install MAUI Workload
+              run: dotnet workload install maui-android
+
+            - name: 📦 Restore NuGet Packages
+              run: dotnet restore ${{ env.PROJECT_PATH }}
+
+            - name: 🔢 Update Version
+              run: |
+                  VERSION="${{ inputs.version }}"
+                  VERSION_NUMBER="${VERSION#v}"
+
+                  # Update project file with new version
+                  sed -i "s/<ApplicationDisplayVersion>.*<\/ApplicationDisplayVersion>/<ApplicationDisplayVersion>$VERSION_NUMBER<\/ApplicationDisplayVersion>/g" ${{ env.PROJECT_PATH }}
+                  sed -i "s/<ApplicationVersion>.*<\/ApplicationVersion>/<ApplicationVersion>$(date +%s)<\/ApplicationVersion>/g" ${{ env.PROJECT_PATH }}
+
+                  echo "Updated version to: $VERSION_NUMBER"
+
+            - name: 🏗️ Build Android Release APK
+              run: |
+                  dotnet publish ${{ env.PROJECT_PATH }} \
+                    -f net9.0-android \
+                    -c Release \
+                    -p:AndroidPackageFormat=apk \
+                    -p:AndroidKeyStore=false \
+                    -o ./artifacts/android/
+
+            - name: 📱 Build Android Release AAB
+              run: |
+                  dotnet publish ${{ env.PROJECT_PATH }} \
+                    -f net9.0-android \
+                    -c Release \
+                    -p:AndroidPackageFormat=aab \
+                    -p:AndroidKeyStore=false \
+                    -o ./artifacts/android-aab/
+
+            - name: 🎯 Prepare Android Artifacts
+              run: |
+                  mkdir -p ./release-artifacts/android
+
+                  # Find and copy APK
+                  find ./artifacts/android -name "*.apk" -exec cp {} ./release-artifacts/android/${{ env.APP_NAME }}-${{ inputs.version }}-android.apk \;
+
+                  # Find and copy AAB
+                  find ./artifacts/android-aab -name "*.aab" -exec cp {} ./release-artifacts/android/${{ env.APP_NAME }}-${{ inputs.version }}-android.aab \;
+
+                  # Create checksums
+                  cd ./release-artifacts/android
+                  sha256sum *.apk *.aab > checksums-android.txt
+                  ls -la
+
+            - name: 📊 Upload Android Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: android-release-${{ inputs.version }}
+                  path: ./release-artifacts/android/
+                  retention-days: 30
+
+    build-wearos-release:
+        name: ⌚ Build Wear OS Release
+        runs-on: ubuntu-latest
+        needs: approval
+
+        steps:
+            - name: 📥 Checkout Code
+              uses: actions/checkout@v4
+
+            - name: 🔧 Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: ${{ env.DOTNET_VERSION }}
+
+            - name: 📱 Setup Android SDK
+              uses: android-actions/setup-android@v3
+              with:
+                  api-level: 34
+                  build-tools: 34.0.0
+
+            - name: 🛠️ Install MAUI Workload
+              run: dotnet workload install maui-android
+
+            - name: 📦 Restore NuGet Packages
+              run: dotnet restore ${{ env.PROJECT_PATH }}
+
+            - name: 🔢 Update Version for Wear OS
+              run: |
+                  VERSION="${{ inputs.version }}"
+                  VERSION_NUMBER="${VERSION#v}"
+
+                  # Update project file with new version
+                  sed -i "s/<ApplicationDisplayVersion>.*<\/ApplicationDisplayVersion>/<ApplicationDisplayVersion>$VERSION_NUMBER<\/ApplicationDisplayVersion>/g" ${{ env.PROJECT_PATH }}
+                  sed -i "s/<ApplicationVersion>.*<\/ApplicationVersion>/<ApplicationVersion>$(date +%s)<\/ApplicationVersion>/g" ${{ env.PROJECT_PATH }}
+
+                  echo "Updated Wear OS version to: $VERSION_NUMBER"
+
+            - name: ⌚ Build Wear OS Release APK
+              run: |
+                  dotnet publish ${{ env.PROJECT_PATH }} \
+                    -f net9.0-android \
+                    -c Release \
+                    -p:AndroidPackageFormat=apk \
+                    -p:AndroidKeyStore=false \
+                    -p:WearOSTarget=true \
+                    -o ./artifacts/wearos/
+
+            - name: 🎯 Prepare Wear OS Artifacts
+              run: |
+                  mkdir -p ./release-artifacts/wearos
+
+                  # Find and copy APK
+                  find ./artifacts/wearos -name "*.apk" -exec cp {} ./release-artifacts/wearos/${{ env.APP_NAME }}-${{ inputs.version }}-wearos.apk \;
+
+                  # Create checksums
+                  cd ./release-artifacts/wearos
+                  sha256sum *.apk > checksums-wearos.txt
+                  ls -la
+
+            - name: 📊 Upload Wear OS Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: wearos-release-${{ inputs.version }}
+                  path: ./release-artifacts/wearos/
+                  retention-days: 30
+
+    create-release:
+        name: 🎉 Create GitHub Release
+        runs-on: ubuntu-latest
+        needs: [build-android-release, build-wearos-release]
+        if: ${{ inputs.create_release }}
+
+        steps:
+            - name: 📥 Checkout Code
+              uses: actions/checkout@v4
+
+            - name: 📱 Download Android Artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: android-release-${{ inputs.version }}
+                  path: ./android-artifacts/
+
+            - name: ⌚ Download Wear OS Artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: wearos-release-${{ inputs.version }}
+                  path: ./wearos-artifacts/
+
+            - name: 📋 Prepare Release Assets
+              run: |
+                  mkdir -p ./release-assets
+
+                  # Copy all artifacts to release assets
+                  cp ./android-artifacts/* ./release-assets/ 2>/dev/null || true
+                  cp ./wearos-artifacts/* ./release-assets/ 2>/dev/null || true
+
+                  # Create combined checksums
+                  cd ./release-assets
+                  if [ -f checksums-android.txt ] && [ -f checksums-wearos.txt ]; then
+                    cat checksums-android.txt checksums-wearos.txt > checksums-all.txt
+                  elif [ -f checksums-android.txt ]; then
+                    cp checksums-android.txt checksums-all.txt
+                  elif [ -f checksums-wearos.txt ]; then
+                    cp checksums-wearos.txt checksums-all.txt
+                  fi
+
+                  ls -la
+
+            - name: 📝 Generate Release Notes
+              run: |
+                  cat > release-notes.md << 'EOF'
+                  ## 🎉 Distance Alarm ${{ inputs.version }}
+
+                  ${{ inputs.release_notes }}
+
+                  ### 📱 Downloads
+
+                  #### Android
+                  - **APK**: `${{ env.APP_NAME }}-${{ inputs.version }}-android.apk` - For direct installation
+                  - **AAB**: `${{ env.APP_NAME }}-${{ inputs.version }}-android.aab` - For Google Play Store
+
+                  #### Wear OS
+                  - **APK**: `${{ env.APP_NAME }}-${{ inputs.version }}-wearos.apk` - For Wear OS devices
+
+                  ### 🛡️ Security
+                  - All packages are built from source and checksums are provided
+                  - See `checksums-all.txt` for file verification
+
+                  ### 📋 Installation Instructions
+
+                  **Android:**
+                  1. Download the APK file
+                  2. Enable "Unknown Sources" in Android settings
+                  3. Install the APK
+
+                  **Wear OS:**
+                  1. Enable Developer Mode on your Wear OS device
+                  2. Use ADB to install: `adb install ${{ env.APP_NAME }}-${{ inputs.version }}-wearos.apk`
+
+                  ### 🔧 Build Information
+                  - .NET Version: ${{ env.DOTNET_VERSION }}
+                  - Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+                  - Commit: ${{ github.sha }}
+                  EOF
+
+            - name: 🏷️ Create Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: ${{ inputs.version }}
+                  name: "🚀 Distance Alarm ${{ inputs.version }}"
+                  body_path: release-notes.md
+                  files: |
+                      ./release-assets/*
+                  prerelease: ${{ inputs.prerelease }}
+                  generate_release_notes: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: 📊 Release Summary
+              run: |
+                  echo "## 🎉 Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
+                  echo "**Version:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+                  echo "**Release URL:** https://github.com/${{ github.repository }}/releases/tag/${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+                  echo "**Pre-release:** ${{ inputs.prerelease }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 📦 Artifacts Created:" >> $GITHUB_STEP_SUMMARY
+                  echo "- 📱 Android APK" >> $GITHUB_STEP_SUMMARY
+                  echo "- 📱 Android AAB (Play Store)" >> $GITHUB_STEP_SUMMARY
+                  echo "- ⌚ Wear OS APK" >> $GITHUB_STEP_SUMMARY
+                  echo "- 🛡️ Checksums for verification" >> $GITHUB_STEP_SUMMARY

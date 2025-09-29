@@ -1,0 +1,26 @@
+{
+    "dotnet.defaultSolution": "DistanceAlarm.csproj",
+    "omnisharp.enableRoslynAnalyzers": true,
+    "omnisharp.enableEditorConfigSupport": true,
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/*.user": true
+    },
+    "xml.fileAssociations": [
+        {
+            "pattern": "**/*.xaml",
+            "systemId": "https://docs.microsoft.com/en-us/dotnet/desktop/wpf/advanced/xaml-overview"
+        }
+    ],
+    "emmet.includeLanguages": {
+        "xml": "html"
+    },
+    "dotnet-maui.android.sdkPath": "${env:ANDROID_HOME}",
+    "dotnet-maui.android.ndkPath": "${env:ANDROID_NDK_HOME}",
+    "terminal.integrated.env.windows": {
+        "ANDROID_HOME": "${env:ANDROID_HOME}",
+        "ANDROID_NDK_HOME": "${env:ANDROID_NDK_HOME}",
+        "JAVA_HOME": "${env:JAVA_HOME}"
+    }
+}
