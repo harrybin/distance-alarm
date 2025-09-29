@@ -51,6 +51,9 @@
 		<AndroidLinkSkip />
 		<EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
 		<BundleAssemblies>false</BundleAssemblies>
+		
+		<!-- XAML Binding Optimizations -->
+		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
 
 		<!-- Java compilation fixes -->
 		<AndroidEnableDesugar>true</AndroidEnableDesugar>
