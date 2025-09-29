@@ -40,14 +40,14 @@ jobs:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      - name: � Display Workflow Inputs
+      - name: 📋 Display Workflow Inputs
         if: github.event_name == 'workflow_dispatch'
         run: |
           echo "🎯 Workflow triggered manually with inputs:"
           echo "Build Type: ${{ github.event.inputs.build_type }}"
           echo "Environment: ${{ github.event.inputs.environment }}"
 
-      - name: �🔧 Setup .NET
+      - name: 🔧 Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
