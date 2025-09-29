@@ -151,7 +151,8 @@ public class BluetoothService : IBluetoothService
         var bleDevice = new BleDevice
         {
             Id = e.Device.Id.ToString(),
-            Name = e.Device.Name ?? "Unknown",
+            Name = !string.IsNullOrWhiteSpace(e.Device.Name) ? e.Device.Name : "Unknown",
+            MacAddress = e.Device.Id.ToString(), // BLE device ID is often the MAC address
             RssiValue = e.Device.Rssi,
             Device = e.Device,
             LastSeen = DateTime.Now
