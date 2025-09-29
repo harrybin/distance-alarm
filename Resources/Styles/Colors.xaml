@@ -6,31 +6,108 @@
 
     <!-- Note: For Android please see also Platforms\Android\Resources\values\colors.xml -->
 
-    <Color x:Key="Primary">#512BD4</Color>
-    <Color x:Key="PrimaryDark">#ac99ea</Color>
-    <Color x:Key="PrimaryDarkText">#242424</Color>
-    <Color x:Key="Secondary">#DFD8F7</Color>
-    <Color x:Key="SecondaryDarkText">#9880e5</Color>
-    <Color x:Key="Tertiary">#2B0B98</Color>
-
-    <Color x:Key="White">White</Color>
-    <Color x:Key="Black">Black</Color>
+    <!-- Material Design 3 Color System -->
+    <!-- Primary Colors -->
+    <Color x:Key="Primary">#6750A4</Color>
+    <Color x:Key="OnPrimary">#FFFFFF</Color>
+    <Color x:Key="PrimaryContainer">#EADDFF</Color>
+    <Color x:Key="OnPrimaryContainer">#21005D</Color>
+    
+    <!-- Secondary Colors -->
+    <Color x:Key="Secondary">#625B71</Color>
+    <Color x:Key="OnSecondary">#FFFFFF</Color>
+    <Color x:Key="SecondaryContainer">#E8DEF8</Color>
+    <Color x:Key="OnSecondaryContainer">#1D192B</Color>
+    
+    <!-- Tertiary Colors -->
+    <Color x:Key="Tertiary">#7D5260</Color>
+    <Color x:Key="OnTertiary">#FFFFFF</Color>
+    <Color x:Key="TertiaryContainer">#FFD8E4</Color>
+    <Color x:Key="OnTertiaryContainer">#31111D</Color>
+    
+    <!-- Error Colors -->
+    <Color x:Key="Error">#BA1A1A</Color>
+    <Color x:Key="ErrorContainer">#FFDAD6</Color>
+    <Color x:Key="OnError">#FFFFFF</Color>
+    <Color x:Key="OnErrorContainer">#410002</Color>
+    
+    <!-- Surface Colors (Light) -->
+    <Color x:Key="Surface">#FFFBFE</Color>
+    <Color x:Key="OnSurface">#1C1B1F</Color>
+    <Color x:Key="SurfaceVariant">#E7E0EC</Color>
+    <Color x:Key="OnSurfaceVariant">#49454F</Color>
+    <Color x:Key="SurfaceContainer">#F3EDF7</Color>
+    <Color x:Key="SurfaceContainerHigh">#ECE6F0</Color>
+    <Color x:Key="SurfaceContainerHighest">#E6E0E9</Color>
+    
+    <!-- Surface Colors (Dark) -->
+    <Color x:Key="SurfaceDark">#141218</Color>
+    <Color x:Key="OnSurfaceDark">#E6E1E5</Color>
+    <Color x:Key="SurfaceVariantDark">#49454F</Color>
+    <Color x:Key="OnSurfaceVariantDark">#CAC4D0</Color>
+    <Color x:Key="SurfaceContainerDark">#211F26</Color>
+    <Color x:Key="SurfaceContainerHighDark">#2B2930</Color>
+    <Color x:Key="SurfaceContainerHighestDark">#36343B</Color>
+    
+    <!-- Outline Colors -->
+    <Color x:Key="Outline">#79747E</Color>
+    <Color x:Key="OutlineVariant">#CAC4D0</Color>
+    <Color x:Key="OutlineDark">#938F99</Color>
+    <Color x:Key="OutlineVariantDark">#49454F</Color>
+    
+    <!-- Legacy Colors (for compatibility) -->
+    <Color x:Key="PrimaryDark">#D0BCFF</Color>
+    <Color x:Key="PrimaryDarkText">#21005D</Color>
+    <Color x:Key="SecondaryDarkText">#CAC4D0</Color>
+    <Color x:Key="White">#FFFFFF</Color>
+    <Color x:Key="Black">#000000</Color>
     <Color x:Key="Magenta">#D600AA</Color>
-    <Color x:Key="MidnightBlue">#190649</Color>
-    <Color x:Key="OffBlack">#1f1f1f</Color>
+    <Color x:Key="MidnightBlue">#21005D</Color>
+    <Color x:Key="OffBlack">#141218</Color>
 
-    <Color x:Key="Gray100">#E1E1E1</Color>
-    <Color x:Key="Gray200">#C8C8C8</Color>
-    <Color x:Key="Gray300">#ACACAC</Color>
-    <Color x:Key="Gray400">#919191</Color>
-    <Color x:Key="Gray500">#6E6E6E</Color>
-    <Color x:Key="Gray600">#404040</Color>
-    <Color x:Key="Gray900">#212121</Color>
-    <Color x:Key="Gray950">#141414</Color>
+    <!-- Neutral Colors -->
+    <Color x:Key="Gray100">#F4EFF4</Color>
+    <Color x:Key="Gray200">#E6E1E5</Color>
+    <Color x:Key="Gray300">#CAC4D0</Color>
+    <Color x:Key="Gray400">#938F99</Color>
+    <Color x:Key="Gray500">#79747E</Color>
+    <Color x:Key="Gray600">#49454F</Color>
+    <Color x:Key="Gray900">#1C1B1F</Color>
+    <Color x:Key="Gray950">#141218</Color>
 
+    <!-- Material Design 3 Color Brushes -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
+    <SolidColorBrush x:Key="OnPrimaryBrush" Color="{StaticResource OnPrimary}"/>
+    <SolidColorBrush x:Key="PrimaryContainerBrush" Color="{StaticResource PrimaryContainer}"/>
+    <SolidColorBrush x:Key="OnPrimaryContainerBrush" Color="{StaticResource OnPrimaryContainer}"/>
+    
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
+    <SolidColorBrush x:Key="OnSecondaryBrush" Color="{StaticResource OnSecondary}"/>
+    <SolidColorBrush x:Key="SecondaryContainerBrush" Color="{StaticResource SecondaryContainer}"/>
+    <SolidColorBrush x:Key="OnSecondaryContainerBrush" Color="{StaticResource OnSecondaryContainer}"/>
+    
     <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>
+    <SolidColorBrush x:Key="OnTertiaryBrush" Color="{StaticResource OnTertiary}"/>
+    <SolidColorBrush x:Key="TertiaryContainerBrush" Color="{StaticResource TertiaryContainer}"/>
+    <SolidColorBrush x:Key="OnTertiaryContainerBrush" Color="{StaticResource OnTertiaryContainer}"/>
+    
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource Error}"/>
+    <SolidColorBrush x:Key="OnErrorBrush" Color="{StaticResource OnError}"/>
+    <SolidColorBrush x:Key="ErrorContainerBrush" Color="{StaticResource ErrorContainer}"/>
+    <SolidColorBrush x:Key="OnErrorContainerBrush" Color="{StaticResource OnErrorContainer}"/>
+    
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"/>
+    <SolidColorBrush x:Key="OnSurfaceBrush" Color="{AppThemeBinding Light={StaticResource OnSurface}, Dark={StaticResource OnSurfaceDark}}"/>
+    <SolidColorBrush x:Key="SurfaceVariantBrush" Color="{AppThemeBinding Light={StaticResource SurfaceVariant}, Dark={StaticResource SurfaceVariantDark}}"/>
+    <SolidColorBrush x:Key="OnSurfaceVariantBrush" Color="{AppThemeBinding Light={StaticResource OnSurfaceVariant}, Dark={StaticResource OnSurfaceVariantDark}}"/>
+    <SolidColorBrush x:Key="SurfaceContainerBrush" Color="{AppThemeBinding Light={StaticResource SurfaceContainer}, Dark={StaticResource SurfaceContainerDark}}"/>
+    <SolidColorBrush x:Key="SurfaceContainerHighBrush" Color="{AppThemeBinding Light={StaticResource SurfaceContainerHigh}, Dark={StaticResource SurfaceContainerHighDark}}"/>
+    <SolidColorBrush x:Key="SurfaceContainerHighestBrush" Color="{AppThemeBinding Light={StaticResource SurfaceContainerHighest}, Dark={StaticResource SurfaceContainerHighestDark}}"/>
+    
+    <SolidColorBrush x:Key="OutlineBrush" Color="{AppThemeBinding Light={StaticResource Outline}, Dark={StaticResource OutlineDark}}"/>
+    <SolidColorBrush x:Key="OutlineVariantBrush" Color="{AppThemeBinding Light={StaticResource OutlineVariant}, Dark={StaticResource OutlineVariantDark}}"/>
+    
+    <!-- Legacy Brushes (for compatibility) -->
     <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource White}"/>
     <SolidColorBrush x:Key="BlackBrush" Color="{StaticResource Black}"/>
 
