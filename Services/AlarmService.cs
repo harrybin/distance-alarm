@@ -75,9 +75,13 @@ public class AlarmService : IAlarmService
     {
         try
         {
-            // This will require platform-specific implementation for proper notifications
-            // For now, we'll use a simple display alert approach
-            await Application.Current?.MainPage?.DisplayAlert(title, message, "OK")!;
+            // Use the platform-specific notification system instead of UI alerts
+            // For now, just log the notification - this should be implemented in AndroidAlarmService
+            System.Diagnostics.Debug.WriteLine($"NOTIFICATION: {title} - {message}");
+
+            // Avoid accessing Application.Current.MainPage which can cause crashes on Wear OS
+            // This will be handled by platform-specific implementations
+            await Task.CompletedTask;
         }
         catch (Exception ex)
         {

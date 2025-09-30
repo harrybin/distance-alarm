@@ -38,8 +38,24 @@ public class BluetoothService : IBluetoothService
 
     public async Task<bool> RequestBluetoothPermissionsAsync()
     {
-        // This will be implemented in platform-specific code
-        return await Task.FromResult(true);
+        try
+        {
+            // Request location permissions (required for BLE scanning)
+            var locationStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+
+            if (locationStatus != PermissionStatus.Granted)
+            {
+                System.Diagnostics.Debug.WriteLine("Location permission denied - BLE scanning may not work");
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Permission request failed: {ex.Message}");
+            return false;
+        }
     }
 
     public async Task StartScanningAsync()
@@ -150,12 +166,12 @@ public class BluetoothService : IBluetoothService
     {
         // Extract the best possible name from the device
         string deviceName = "Unknown";
-        
+
         if (!string.IsNullOrWhiteSpace(e.Device.Name))
         {
             deviceName = e.Device.Name.Trim();
         }
-        
+
         var bleDevice = new BleDevice
         {
             Id = e.Device.Id.ToString(),

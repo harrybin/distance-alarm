@@ -49,6 +49,13 @@ public partial class MainViewModel : ObservableObject
                 return;
             }
 
+            // Request permissions before scanning
+            if (!await _bluetoothService.RequestBluetoothPermissionsAsync())
+            {
+                StatusMessage = "Bluetooth permissions denied. Please grant location permissions in app settings.";
+                return;
+            }
+
             IsScanning = true;
             DiscoveredDevices.Clear();
             StatusMessage = "Scanning for devices...";
@@ -62,6 +69,7 @@ public partial class MainViewModel : ObservableObject
         {
             StatusMessage = $"Scan failed: {ex.Message}";
             IsScanning = false;
+            System.Diagnostics.Debug.WriteLine($"StartScanAsync error: {ex}");
         }
     }
 
