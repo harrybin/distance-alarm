@@ -76,7 +76,7 @@
 			15.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion
 			Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-			24.0</SupportedOSPlatformVersion>
+			21.0</SupportedOSPlatformVersion>
 		<!-- <SupportedOSPlatformVersion
 			Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
 			10.0.17763.0</SupportedOSPlatformVersion>
@@ -102,6 +102,9 @@
 		<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
 		<AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
 		<AndroidLinkMode>None</AndroidLinkMode>
+		<!-- Minimize build complexity for Wear OS -->
+		<AndroidEnableMultiDex>false</AndroidEnableMultiDex>
+		<AndroidGenerateResourceDesigner>false</AndroidGenerateResourceDesigner>
 	</PropertyGroup>
 
 	<!-- Debug Configuration Optimizations -->

@@ -8,12 +8,9 @@ namespace DistanceAlarm.Platforms.Android;
 
 public class AndroidPermissionService : IPermissionService
 {
-    private readonly MainActivity _activity;
-
-    public AndroidPermissionService()
+    private MainActivity? GetCurrentActivity()
     {
-        _activity = Platform.CurrentActivity as MainActivity
-            ?? throw new InvalidOperationException("Current activity is not MainActivity");
+        return Platform.CurrentActivity as MainActivity;
     }
 
     public async Task<bool> RequestBluetoothPermissionsAsync()
@@ -107,8 +104,15 @@ public class AndroidPermissionService : IPermissionService
     {
         try
         {
+            var activity = GetCurrentActivity();
+            if (activity == null)
+            {
+                System.Diagnostics.Debug.WriteLine("No current activity available for permission request");
+                return false;
+            }
+
             var permissionsToRequest = permissions
-                .Where(p => ContextCompat.CheckSelfPermission(_activity, p) != global::Android.Content.PM.Permission.Granted)
+                .Where(p => ContextCompat.CheckSelfPermission(activity, p) != global::Android.Content.PM.Permission.Granted)
                 .ToArray();
 
             if (permissionsToRequest.Length == 0)
@@ -123,7 +127,7 @@ public class AndroidPermissionService : IPermissionService
             var callback = new PermissionCallback(tcs);
 
             // Request permissions
-            ActivityCompat.RequestPermissions(_activity, permissionsToRequest, requestCode);
+            ActivityCompat.RequestPermissions(activity, permissionsToRequest, requestCode);
 
             // Wait for the result (timeout after 30 seconds)
             using var cancellationToken = new CancellationTokenSource(TimeSpan.FromSeconds(30));
@@ -140,8 +144,15 @@ public class AndroidPermissionService : IPermissionService
 
     private bool CheckPermissions(string[] permissions)
     {
+        var activity = GetCurrentActivity();
+        if (activity == null)
+        {
+            System.Diagnostics.Debug.WriteLine("No current activity available for permission check");
+            return false;
+        }
+
         return permissions.All(p =>
-            ContextCompat.CheckSelfPermission(_activity, p) == global::Android.Content.PM.Permission.Granted);
+            ContextCompat.CheckSelfPermission(activity, p) == global::Android.Content.PM.Permission.Granted);
     }
 
     private class PermissionCallback

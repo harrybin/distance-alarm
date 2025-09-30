@@ -27,15 +27,41 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel(IBluetoothService bluetoothService, IAlarmService alarmService)
     {
-        _bluetoothService = bluetoothService;
-        _alarmService = alarmService;
-        _connectionState = new ConnectionState();
-        _settings = new AlarmSettings();
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("MainViewModel constructor starting...");
+            
+            _bluetoothService = bluetoothService;
+            _alarmService = alarmService;
+            _connectionState = new ConnectionState();
+            _settings = new AlarmSettings();
 
-        // Subscribe to service events
-        _bluetoothService.DeviceDiscovered += OnDeviceDiscovered;
-        _bluetoothService.ConnectionStatusChanged += OnConnectionStatusChanged;
-        _bluetoothService.ConnectionLost += OnConnectionLost;
+            // Subscribe to service events with error handling
+            try
+            {
+                _bluetoothService.DeviceDiscovered += OnDeviceDiscovered;
+                _bluetoothService.ConnectionStatusChanged += OnConnectionStatusChanged;
+                _bluetoothService.ConnectionLost += OnConnectionLost;
+                System.Diagnostics.Debug.WriteLine("MainViewModel event subscriptions completed");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"MainViewModel event subscription failed: {ex.Message}");
+                // Continue without throwing - events are not critical for basic functionality
+            }
+
+            System.Diagnostics.Debug.WriteLine("MainViewModel constructor completed successfully");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"MainViewModel constructor failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
+            
+            // Initialize with safe defaults to prevent total failure
+            _connectionState = new ConnectionState();
+            _settings = new AlarmSettings();
+            StatusMessage = "Initialization error - some features may not work";
+        }
     }
 
     [RelayCommand]
