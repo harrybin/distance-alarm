@@ -112,6 +112,7 @@ adb start-server
 #### Troubleshooting ADB Installation
 
 **Windows Issues:**
+
 ```bash
 # If PATH is not updated after winget install:
 # 1. Restart terminal/VSCode completely
@@ -120,6 +121,7 @@ $env:PATH = [System.Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';
 ```
 
 **Permission Issues (Linux/macOS):**
+
 ```bash
 # Add user to plugdev group (Linux)
 sudo usermod -a -G plugdev $USER
@@ -131,6 +133,7 @@ sudo udevadm control --reload-rules
 ```
 
 **Device Not Detected:**
+
 ```bash
 # Restart ADB server
 adb kill-server
@@ -169,29 +172,38 @@ adb devices
 
 The project includes pre-configured VS Code tasks for streamlined development. Access them via `Ctrl+Shift+P` → "Tasks: Run Task":
 
-| Task | Emoji | Color | Purpose | Requirements |
-|------|-------|-------|---------|--------------|
-| **🤖 Android Debug** | Robot | Green (#4CAF50) | Basic Android build | .NET SDK |
-| **🤖 Android Release** | Robot | Orange (#FF9800) | Release build | .NET SDK |
-| **📱 Install Android** | Phone | Green (#4CAF50) | Android deployment | Android SDK + Device |
-| **⌚ Install Wear OS** | Watch | Green (#4CAF50) | Wear OS deployment | Android SDK + Wear Device |
-| **📦 Deploy Android APK** | Package | Orange (#FF9800) | APK creation | Android SDK |
-| **📦 Deploy Wear OS APK** | Package | Orange (#FF9800) | Wear OS APK | Android SDK |
-| **🧹 Clean** | Broom | Gray (#607D8B) | Clean builds | .NET SDK |
-| **📥 Restore Packages** | Download | Gray (#607D8B) | Package restore | .NET SDK |
-| **📱 Check Devices** | Phone | Brown (#795548) | Device discovery | **ADB Required** |
-| **🔧 Install APK (Android)** | Wrench | Brown (#795548) | ADB Android install | **ADB Required** |
-| **🔧 Install APK (Wear OS)** | Wrench | Brown (#795548) | ADB Wear OS install | **ADB Required** |
+| Task                               | Emoji    | Color            | Purpose                 | Requirements              |
+| ---------------------------------- | -------- | ---------------- | ----------------------- | ------------------------- |
+| **🤖 Android Debug**               | Robot    | Green (#4CAF50)  | Basic Android build     | .NET SDK                  |
+| **🤖 Android Release**             | Robot    | Orange (#FF9800) | Release build           | .NET SDK                  |
+| **📱 Install Android**             | Phone    | Green (#4CAF50)  | Android deployment      | Android SDK + Device      |
+| **⌚ Install Wear OS**             | Watch    | Blue (#1A237E)   | Build for Wear OS (ARM) | Android SDK + Wear Device |
+| **🔧 Install Wear OS APK via ADB** | Wrench   | Blue (#1A237E)   | Install APK via ADB     | **ADB + Wear OS Device**  |
+| **📦 Deploy Android APK**          | Package  | Orange (#FF9800) | APK creation            | Android SDK               |
+| **📦 Deploy Wear OS APK**          | Package  | Orange (#FF9800) | Wear OS APK             | Android SDK               |
+| **🧹 Clean**                       | Broom    | Gray (#607D8B)   | Clean builds            | .NET SDK                  |
+| **📥 Restore Packages**            | Download | Gray (#607D8B)   | Package restore         | .NET SDK                  |
+| **📱 Check Devices**               | Phone    | Brown (#795548)  | Device discovery        | **ADB Required**          |
+| **🔧 Install APK (Android)**       | Wrench   | Brown (#795548)  | ADB Android install     | **ADB Required**          |
+| **🔧 Install APK (Wear OS)**       | Wrench   | Brown (#795548)  | ADB Wear OS install     | **ADB Required**          |
 
 ### 🔍 ADB-Dependent Tasks
 
 The following tasks require ADB to be installed and available in PATH:
 
 - **📱 Check Devices** - Lists all connected Android/Wear OS devices
+- **🔧 Install Wear OS APK via ADB** - Builds for ARM architecture and installs APK on Wear OS device via ADB
 - **🔧 Install APK (Android)** - Installs APK on Android device via ADB
 - **🔧 Install APK (Wear OS)** - Installs APK on Wear OS device via ADB
 
+**Wear OS Installation Workflow:**
+
+1. Run **⌚ Install Wear OS** to build for ARM architecture
+2. Run **🔧 Install Wear OS APK via ADB** to install via ADB (auto-detects Wear OS device)
+3. Or use the combined workflow by running **🔧 Install Wear OS APK via ADB** directly
+
 **Installation Status Check:**
+
 ```bash
 # Verify ADB is available for VSCode tasks
 adb version
@@ -328,21 +340,96 @@ For releases, configure these GitHub repository settings:
    - Go back to Settings → Developer Options
    - Enable "ADB Debugging" and "Debug over Wi-Fi"
 
-2. **Connect Wear OS device**
+2. **Prepare Wear OS device for ADB connection**
+
+   **Important**: Before you can install on Wear OS, you first need to do an `adb pair ...` then `adb connect`.
+
+   **Hint**: Set the developer option "Keep display on during charging" or extend your display on time to give ADB longer time to pair and connect.
 
    ```bash
-   # Find Wear OS device IP (shown in Developer Options)
+   # Step 1: Pair with Wear OS device (first time only)
+   # Find the pairing information in Developer Options → Wireless debugging
+   # Look for "Pair device with pairing code"
+   adb pair [WEAR_OS_IP]:[PAIRING_PORT]
+   # Enter the 6-digit pairing code shown on your Wear OS device
+
+   # Step 2: Connect to Wear OS device
+   # Use the IP and port from "IP address & Port" in Wireless debugging
    adb connect [WEAR_OS_IP]:5555
 
    # Verify connection
    adb devices
    ```
 
-3. **Deploy to Wear OS**
+3. **Connect Wear OS device (detailed steps)**
+
    ```bash
-   # Build and deploy
-   dotnet build -t:Run -f net9.0-android -p:TargetFramework=net9.0-android
+   # Example pairing process:
+   # 1. On Wear OS: Settings → Developer Options → Wireless debugging → Pair device with pairing code
+   # 2. Note the IP address and pairing port (e.g., 192.168.1.100:12345)
+   # 3. Note the 6-digit pairing code
+
+   adb pair 192.168.1.100:12345
+   # Enter pairing code when prompted: 123456
+
+   # After successful pairing, connect using the regular port (usually 5555)
+   adb connect 192.168.1.100:5555
+
+   # Verify your Wear OS device appears in the list
+   adb devices
    ```
+
+4. **Deploy to Wear OS**
+
+   **Important**: Wear OS devices typically use ARM architecture (`armeabi-v7a`), so you need to build specifically for this architecture.
+
+   ```bash
+   # Method 1: Build for ARM architecture and install via dotnet (Recommended)
+   dotnet build -f net9.0-android -c Debug -p:WearOSTarget=true -p:RuntimeIdentifiers=android-arm
+
+   # Then manually install the APK via ADB
+   adb -s [WEAR_OS_IP]:5555 install -r "bin\Debug\net9.0-android\com.distancealarm.app-Signed.apk"
+
+   # Method 2: Use the updated VS Code task
+   # Press Ctrl+Shift+P → Tasks: Run Task → ⌚ Install Wear OS
+   ```
+
+   **Architecture Check**: If installation fails with `INSTALL_FAILED_NO_MATCHING_ABIS`, check your device architecture:
+
+   ```bash
+   # Check Wear OS device architecture
+   adb -s [WEAR_OS_IP]:5555 shell getprop ro.product.cpu.abi
+   # Common result: armeabi-v7a (ARM 32-bit)
+
+   # Build for the correct architecture
+   dotnet build -f net9.0-android -c Debug -p:WearOSTarget=true -p:RuntimeIdentifiers=android-arm
+   ```
+
+#### Wear OS Connection Tips
+
+- **Keep display active**: Enable "Keep display on during charging" in Developer Options to prevent the watch from sleeping during the pairing process
+- **Extend screen timeout**: Go to Settings → Display → Screen timeout and set it to the maximum time (30 seconds or more)
+- **Stay on Wi-Fi debugging screen**: Keep the Wireless debugging screen open during the pairing process
+- **Re-pair if needed**: If connection fails, you may need to unpair and pair again
+- **Check firewall**: Ensure your computer's firewall allows ADB connections on the specified ports
+
+#### Troubleshooting Wear OS ADB Connection
+
+```bash
+# If pairing fails, restart wireless debugging
+# On Wear OS: Developer Options → Wireless debugging → Turn off/on
+
+# Check if device is paired but not connected
+adb devices  # Should show device as "offline" or "unauthorized"
+
+# Force disconnect and reconnect
+adb disconnect [WEAR_OS_IP]:5555
+adb connect [WEAR_OS_IP]:5555
+
+# Reset ADB server if connection issues persist
+adb kill-server
+adb start-server
+```
 
 #### Alternative: Wear OS via Visual Studio
 

@@ -106,8 +106,11 @@
                 "net9.0-android",
                 "-c",
                 "Debug",
-                "-t:Run",
-                "-p:WearOSTarget=true"
+                "-p:WearOSTarget=true",
+                "-p:RuntimeIdentifiers=android-arm",
+                "--no-restore",
+                "-v",
+                "minimal"
             ],
             "group": "build",
             "options": {
@@ -124,8 +127,33 @@
                 "clear": false
             },
             "problemMatcher": "$msCompile",
-            "detail": "Install on connected Wear OS device",
+            "detail": "Build for ARM architecture and install on connected Wear OS device",
             "dependsOn": "🤖 Android Debug"
+        },
+        {
+            "label": "🔧 Install Wear OS APK via ADB",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "$devices = adb devices -l | Select-String 'OPWWE251|wear'; if ($devices) { $deviceId = ($devices[0] -split '\\s+')[0]; adb -s $deviceId install -r 'bin\\Debug\\net9.0-android\\com.distancealarm.app-Signed.apk' } else { Write-Host 'No Wear OS device found. Connect your Wear OS device first.' -ForegroundColor Red }"
+            ],
+            "group": "build",
+            "options": {
+                "statusbar": {
+                    "color": "#1A237E"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "detail": "Install APK on Wear OS device via ADB (auto-detects device)",
+            "dependsOn": "⌚ Install Wear OS"
         },
         {
             "label": "📦 Deploy Android APK",
