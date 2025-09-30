@@ -1,8 +1,22 @@
+<div align="center">
+<img src="/Resources/AppIcon/appiconfg.svg" alt="App-Icon" width="200"/>
+</div>
+
 # Distance Alarm
 
 A cross-platform .NET MAUI application for Android phones and Wear OS devices that implements a Bluetooth Low Energy (BLE) based distance alarm system.
 
-## 🚀 Features
+## 📱 Screenshots
+<div align="center">
+
+| Main Screen | Settings Screen |
+|-------------|------------------|
+| <img src="/Resources/Images/main_page.png" alt="Main Screen" width="250"/> | <img src="/Resources/Images/settings_page.png" alt="Settings Screen" width="250"/> |
+
+*Dark-themed interface optimized for both Android phones and Wear OS devices*
+</div>
+
+## �🚀 Features
 
 - **Cross-platform support** - Works on Android phones and Wear OS devices
 - **Bluetooth Low Energy connectivity** - Seamless BLE connection between devices
