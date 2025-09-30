@@ -49,7 +49,7 @@
 		<AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
 		<AndroidLinkMode>SdkOnly</AndroidLinkMode>
 		<AndroidLinkSkip />
-		<EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+		<EmbedAssembliesIntoApk Condition="$(WearOSTarget) != 'true'">false</EmbedAssembliesIntoApk>
 		<BundleAssemblies>false</BundleAssemblies>
 
 		<!-- Java compilation fixes -->
@@ -59,7 +59,7 @@
 		<!-- Development Build Speed Optimizations -->
 		<AndroidIncludeDebugSymbols>false</AndroidIncludeDebugSymbols>
 		<DebugType>portable</DebugType>
-		<AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
+		<AndroidUseSharedRuntime Condition="$(WearOSTarget) != 'true'">true</AndroidUseSharedRuntime>
 		<!-- <AndroidFastDeploymentType>Assemblies</AndroidFastDeploymentType> -->
 
 		<!-- Disable unnecessary features during development -->
@@ -98,6 +98,10 @@
 		<AndroidPackageFormat>apk</AndroidPackageFormat>
 		<!-- Wear OS typically uses smaller screens and different hardware -->
 		<DefineConstants>$(DefineConstants);WEAR_OS</DefineConstants>
+		<!-- Fix for Wear OS assembly compression issue - disable fast deployment -->
+		<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+		<AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+		<AndroidLinkMode>None</AndroidLinkMode>
 	</PropertyGroup>
 
 	<!-- Debug Configuration Optimizations -->
@@ -105,8 +109,8 @@
 		<AndroidLinkMode>None</AndroidLinkMode>
 		<AndroidEnableProguard>false</AndroidEnableProguard>
 		<AndroidDexTool>d8</AndroidDexTool>
-		<AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
-		<EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+		<AndroidUseSharedRuntime Condition="$(WearOSTarget) != 'true'">true</AndroidUseSharedRuntime>
+		<EmbedAssembliesIntoApk Condition="$(WearOSTarget) != 'true'">false</EmbedAssembliesIntoApk>
 		<!-- <AndroidFastDeploymentType>Assemblies</AndroidFastDeploymentType> -->
 		<MonoSymbolArchive>false</MonoSymbolArchive>
 	</PropertyGroup>
