@@ -7,20 +7,19 @@
              Title="Settings">
 
     <ScrollView>
-        <VerticalStackLayout Spacing="20" Padding="30">
+        <VerticalStackLayout Spacing="16" Padding="16">
 
-            <!-- Ping Settings -->
-            <Frame BackgroundColor="{AppThemeBinding Light=LightGray, Dark=DarkGray}" Padding="20">
-                <VerticalStackLayout Spacing="15">
+            <!-- Connection Settings Card -->
+            <Border Style="{StaticResource MaterialCard}">
+                <VerticalStackLayout Spacing="16">
                     <Label Text="Connection Settings" 
-                           FontSize="18" 
-                           FontAttributes="Bold" />
+                           Style="{StaticResource TitleMedium}" />
                     
-                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
                         <Label Grid.Column="0"
-                               Text="Ping Interval (seconds):" 
+                               Text="Ping Interval (seconds)" 
                                VerticalOptions="Center" 
-                               FontSize="16" />
+                               Style="{StaticResource BodyMedium}" />
                         <Stepper Grid.Column="1"
                                  Value="{Binding Settings.PingInterval}" 
                                  Minimum="1" 
@@ -29,97 +28,106 @@
                         <Label Grid.Column="2"
                                Text="{Binding Settings.PingInterval}" 
                                VerticalOptions="Center" 
-                               FontSize="16" 
-                               FontAttributes="Bold"
+                               Style="{StaticResource LabelLarge}"
                                MinimumWidthRequest="30" />
                     </Grid>
                 </VerticalStackLayout>
-            </Frame>
+            </Border>
 
-            <!-- Alarm Settings -->
-            <Frame BackgroundColor="{AppThemeBinding Light=LightGray, Dark=DarkGray}" Padding="20">
-                <VerticalStackLayout Spacing="15">
+            <!-- Alarm Settings Card -->
+            <Border Style="{StaticResource MaterialCard}">
+                <VerticalStackLayout Spacing="20">
                     <Label Text="Alarm Settings" 
-                           FontSize="18" 
-                           FontAttributes="Bold" />
+                           Style="{StaticResource TitleMedium}" />
                     
                     <!-- Vibration Settings -->
-                    <StackLayout Orientation="Horizontal" Spacing="10">
-                        <Switch IsToggled="{Binding Settings.VibrationEnabled}" />
-                        <Label Text="Enable Vibration" 
-                               VerticalOptions="Center" 
-                               FontSize="16" />
-                    </StackLayout>
-                    
-                    <Grid ColumnDefinitions="*,Auto,Auto" 
-                          ColumnSpacing="10" 
-                          IsEnabled="{Binding Settings.VibrationEnabled}">
-                        <Label Grid.Column="0"
-                               Text="Vibration Duration (ms):" 
-                               VerticalOptions="Center" 
-                               FontSize="14" />
-                        <Stepper Grid.Column="1"
-                                 Value="{Binding Settings.VibrationDuration}" 
-                                 Minimum="100" 
-                                 Maximum="5000" 
-                                 Increment="100" />
-                        <Label Grid.Column="2"
-                               Text="{Binding Settings.VibrationDuration}" 
-                               VerticalOptions="Center" 
-                               FontSize="14" 
-                               FontAttributes="Bold"
-                               MinimumWidthRequest="50" />
-                    </Grid>
+                    <VerticalStackLayout Spacing="12">
+                        <HorizontalStackLayout Spacing="12">
+                            <Switch IsToggled="{Binding Settings.VibrationEnabled}" />
+                            <Label Text="Enable Vibration" 
+                                   VerticalOptions="Center" 
+                                   Style="{StaticResource BodyMedium}" />
+                        </HorizontalStackLayout>
+                        
+                        <Grid ColumnDefinitions="*,Auto,Auto" 
+                              ColumnSpacing="12" 
+                              IsEnabled="{Binding Settings.VibrationEnabled}"
+                              Opacity="{Binding Settings.VibrationEnabled, Converter={StaticResource BoolToOpacityConverter}}">
+                            <Label Grid.Column="0"
+                                   Text="Duration (ms)" 
+                                   VerticalOptions="Center" 
+                                   Style="{StaticResource BodyMedium}" />
+                            <Stepper Grid.Column="1"
+                                     Value="{Binding Settings.VibrationDuration}" 
+                                     Minimum="100" 
+                                     Maximum="5000" 
+                                     Increment="100" />
+                            <Label Grid.Column="2"
+                                   Text="{Binding Settings.VibrationDuration}" 
+                                   VerticalOptions="Center" 
+                                   Style="{StaticResource LabelLarge}"
+                                   MinimumWidthRequest="50" />
+                        </Grid>
+                    </VerticalStackLayout>
 
                     <!-- Sound Settings -->
-                    <StackLayout Orientation="Horizontal" Spacing="10">
-                        <Switch IsToggled="{Binding Settings.SoundEnabled}" />
-                        <Label Text="Enable Sound" 
-                               VerticalOptions="Center" 
-                               FontSize="16" />
-                    </StackLayout>
-                    
-                    <Grid ColumnDefinitions="Auto,*,Auto" 
-                          ColumnSpacing="10" 
-                          IsEnabled="{Binding Settings.SoundEnabled}">
-                        <Label Grid.Column="0"
-                               Text="Sound Volume:" 
-                               VerticalOptions="Center" 
-                               FontSize="14" />
-                        <Slider Grid.Column="1"
-                                Value="{Binding Settings.SoundVolume}" 
-                                Minimum="0" 
-                                Maximum="1" 
-                                ThumbColor="DodgerBlue"
-                                MinimumWidthRequest="150" />
-                        <Label Grid.Column="2"
-                               Text="{Binding Settings.SoundVolume, StringFormat='{0:P0}'}" 
-                               VerticalOptions="Center" 
-                               FontSize="14" 
-                               FontAttributes="Bold"
-                               MinimumWidthRequest="40" />
-                    </Grid>
+                    <VerticalStackLayout Spacing="12">
+                        <HorizontalStackLayout Spacing="12">
+                            <Switch IsToggled="{Binding Settings.SoundEnabled}" />
+                            <Label Text="Enable Sound" 
+                                   VerticalOptions="Center" 
+                                   Style="{StaticResource BodyMedium}" />
+                        </HorizontalStackLayout>
+                        
+                        <Grid ColumnDefinitions="Auto,*,Auto" 
+                              ColumnSpacing="12" 
+                              IsEnabled="{Binding Settings.SoundEnabled}"
+                              Opacity="{Binding Settings.SoundEnabled, Converter={StaticResource BoolToOpacityConverter}}">
+                            <Label Grid.Column="0"
+                                   Text="Volume" 
+                                   VerticalOptions="Center" 
+                                   Style="{StaticResource BodyMedium}" />
+                            <Slider Grid.Column="1"
+                                    Value="{Binding Settings.SoundVolume}" 
+                                    Minimum="0" 
+                                    Maximum="1" 
+                                    MinimumWidthRequest="150" />
+                            <Label Grid.Column="2"
+                                   Text="{Binding Settings.SoundVolume, StringFormat='{0:P0}'}" 
+                                   VerticalOptions="Center" 
+                                   Style="{StaticResource LabelLarge}"
+                                   MinimumWidthRequest="40" />
+                        </Grid>
+                    </VerticalStackLayout>
 
                     <!-- Notification Settings -->
-                    <StackLayout Orientation="Horizontal" Spacing="10">
+                    <HorizontalStackLayout Spacing="12">
                         <Switch IsToggled="{Binding Settings.NotificationEnabled}" />
                         <Label Text="Enable Notifications" 
                                VerticalOptions="Center" 
-                               FontSize="16" />
-                    </StackLayout>
+                               Style="{StaticResource BodyMedium}" />
+                    </HorizontalStackLayout>
                 </VerticalStackLayout>
-            </Frame>
+            </Border>
 
-            <!-- Action Buttons -->
-            <VerticalStackLayout Spacing="15">
-                <Button Text="Save Settings" 
-                        Command="{Binding SaveSettingsCommand}"
-                        BackgroundColor="Green" />
-                
-                <Button Text="Reset to Defaults" 
-                        Command="{Binding ResetToDefaultsCommand}"
-                        BackgroundColor="Orange" />
-            </VerticalStackLayout>
+            <!-- Action Buttons Card -->
+            <Border Style="{StaticResource MaterialCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Actions" 
+                           Style="{StaticResource TitleMedium}" />
+                    
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <Button Grid.Column="0"
+                                Text="Save Settings" 
+                                Command="{Binding SaveSettingsCommand}" />
+                        
+                        <Button Grid.Column="1"
+                                Text="Reset to Defaults" 
+                                Command="{Binding ResetToDefaultsCommand}"
+                                Style="{StaticResource OutlinedButton}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
 
         </VerticalStackLayout>
     </ScrollView>
