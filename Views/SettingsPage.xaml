@@ -16,19 +16,23 @@
                            FontSize="18" 
                            FontAttributes="Bold" />
                     
-                    <StackLayout Orientation="Horizontal" Spacing="10">
-                        <Label Text="Ping Interval (seconds):" 
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                        <Label Grid.Column="0"
+                               Text="Ping Interval (seconds):" 
                                VerticalOptions="Center" 
                                FontSize="16" />
-                        <Stepper Value="{Binding Settings.PingInterval}" 
+                        <Stepper Grid.Column="1"
+                                 Value="{Binding Settings.PingInterval}" 
                                  Minimum="1" 
                                  Maximum="60" 
                                  Increment="1" />
-                        <Label Text="{Binding Settings.PingInterval}" 
+                        <Label Grid.Column="2"
+                               Text="{Binding Settings.PingInterval}" 
                                VerticalOptions="Center" 
                                FontSize="16" 
-                               FontAttributes="Bold" />
-                    </StackLayout>
+                               FontAttributes="Bold"
+                               MinimumWidthRequest="30" />
+                    </Grid>
                 </VerticalStackLayout>
             </Frame>
 
@@ -47,21 +51,25 @@
                                FontSize="16" />
                     </StackLayout>
                     
-                    <StackLayout Orientation="Horizontal" 
-                                 Spacing="10" 
-                                 IsEnabled="{Binding Settings.VibrationEnabled}">
-                        <Label Text="Vibration Duration (ms):" 
+                    <Grid ColumnDefinitions="*,Auto,Auto" 
+                          ColumnSpacing="10" 
+                          IsEnabled="{Binding Settings.VibrationEnabled}">
+                        <Label Grid.Column="0"
+                               Text="Vibration Duration (ms):" 
                                VerticalOptions="Center" 
                                FontSize="14" />
-                        <Stepper Value="{Binding Settings.VibrationDuration}" 
+                        <Stepper Grid.Column="1"
+                                 Value="{Binding Settings.VibrationDuration}" 
                                  Minimum="100" 
                                  Maximum="5000" 
                                  Increment="100" />
-                        <Label Text="{Binding Settings.VibrationDuration}" 
+                        <Label Grid.Column="2"
+                               Text="{Binding Settings.VibrationDuration}" 
                                VerticalOptions="Center" 
                                FontSize="14" 
-                               FontAttributes="Bold" />
-                    </StackLayout>
+                               FontAttributes="Bold"
+                               MinimumWidthRequest="50" />
+                    </Grid>
 
                     <!-- Sound Settings -->
                     <StackLayout Orientation="Horizontal" Spacing="10">
@@ -71,21 +79,26 @@
                                FontSize="16" />
                     </StackLayout>
                     
-                    <StackLayout Orientation="Horizontal" 
-                                 Spacing="10" 
-                                 IsEnabled="{Binding Settings.SoundEnabled}">
-                        <Label Text="Sound Volume:" 
+                    <Grid ColumnDefinitions="Auto,*,Auto" 
+                          ColumnSpacing="10" 
+                          IsEnabled="{Binding Settings.SoundEnabled}">
+                        <Label Grid.Column="0"
+                               Text="Sound Volume:" 
                                VerticalOptions="Center" 
                                FontSize="14" />
-                        <Slider Value="{Binding Settings.SoundVolume}" 
+                        <Slider Grid.Column="1"
+                                Value="{Binding Settings.SoundVolume}" 
                                 Minimum="0" 
                                 Maximum="1" 
-                                ThumbColor="DodgerBlue" />
-                        <Label Text="{Binding Settings.SoundVolume, StringFormat='{0:P0}'}" 
+                                ThumbColor="DodgerBlue"
+                                MinimumWidthRequest="150" />
+                        <Label Grid.Column="2"
+                               Text="{Binding Settings.SoundVolume, StringFormat='{0:P0}'}" 
                                VerticalOptions="Center" 
                                FontSize="14" 
-                               FontAttributes="Bold" />
-                    </StackLayout>
+                               FontAttributes="Bold"
+                               MinimumWidthRequest="40" />
+                    </Grid>
 
                     <!-- Notification Settings -->
                     <StackLayout Orientation="Horizontal" Spacing="10">
