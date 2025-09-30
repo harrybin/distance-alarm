@@ -4,7 +4,8 @@
              xmlns:viewmodels="clr-namespace:DistanceAlarm.ViewModels"
              x:Class="DistanceAlarm.Views.SettingsPage"
              x:DataType="viewmodels:SettingsViewModel"
-             Title="Settings">
+             Title="Settings"
+             BackgroundColor="Black">
 
     <ScrollView>
         <VerticalStackLayout Spacing="16" Padding="16">
