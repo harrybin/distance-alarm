@@ -8,56 +8,66 @@
              Title="Distance Alarm">
 
     <ScrollView>
-        <VerticalStackLayout Spacing="25" Padding="30,0">
+        <VerticalStackLayout Spacing="16" Padding="16">
 
-            <!-- Status Section -->
-            <Frame BackgroundColor="{AppThemeBinding Light=LightGray, Dark=DarkGray}" Padding="20">
-                <VerticalStackLayout Spacing="10">
+            <!-- Status Card -->
+            <Border Style="{StaticResource MaterialElevatedCard}">
+                <VerticalStackLayout Spacing="12">
                     <Label Text="Connection Status" 
-                           FontSize="18" 
-                           FontAttributes="Bold"
+                           Style="{StaticResource TitleMedium}"
                            HorizontalOptions="Center" />
                     
                     <Label Text="{Binding StatusMessage}" 
-                           FontSize="16"
+                           Style="{StaticResource BodyLarge}"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center" />
                     
                     <Label Text="{Binding ConnectionState.ConnectedDevice.DisplayName, StringFormat='Connected to: {0}'}"
-                           FontSize="14"
+                           Style="{StaticResource BodyMedium}"
                            HorizontalOptions="Center"
                            IsVisible="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNotNullConverter}}" />
                 </VerticalStackLayout>
-            </Frame>
+            </Border>
 
-            <!-- Control Buttons -->
-            <VerticalStackLayout Spacing="15">
-                <Button Text="Start Scanning" 
-                        Command="{Binding StartScanCommand}"
-                        IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"
-                        BackgroundColor="DodgerBlue" />
-                
-                <Button Text="Stop Scanning" 
-                        Command="{Binding StopScanCommand}"
-                        IsEnabled="{Binding IsScanning}"
-                        BackgroundColor="Orange" />
-                
-                <Button Text="Disconnect" 
-                        Command="{Binding DisconnectCommand}"
-                        IsEnabled="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNotNullConverter}}"
-                        BackgroundColor="Crimson" />
-                
-                <Button Text="Test Alarm" 
-                        Command="{Binding TestAlarmCommand}"
-                        BackgroundColor="Purple" />
-            </VerticalStackLayout>
+            <!-- Control Buttons Card -->
+            <Border Style="{StaticResource MaterialCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Controls" 
+                           Style="{StaticResource TitleMedium}" />
+                    
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" 
+                          ColumnSpacing="12" RowSpacing="12">
+                        
+                        <Button Grid.Row="0" Grid.Column="0"
+                                Text="Start Scanning" 
+                                Command="{Binding StartScanCommand}"
+                                IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}" />
+                        
+                        <Button Grid.Row="0" Grid.Column="1"
+                                Text="Stop Scanning" 
+                                Command="{Binding StopScanCommand}"
+                                IsEnabled="{Binding IsScanning}"
+                                Style="{StaticResource SecondaryButton}" />
+                        
+                        <Button Grid.Row="1" Grid.Column="0"
+                                Text="Disconnect" 
+                                Command="{Binding DisconnectCommand}"
+                                IsEnabled="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNotNullConverter}}"
+                                Style="{StaticResource OutlinedButton}" />
+                        
+                        <Button Grid.Row="1" Grid.Column="1"
+                                Text="Test Alarm" 
+                                Command="{Binding TestAlarmCommand}"
+                                Style="{StaticResource TextButton}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
 
-            <!-- Discovered Devices -->
-            <Frame BackgroundColor="{AppThemeBinding Light=LightGray, Dark=DarkGray}" Padding="20">
-                <VerticalStackLayout Spacing="10">
+            <!-- Discovered Devices Card -->
+            <Border Style="{StaticResource MaterialCard}">
+                <VerticalStackLayout Spacing="12">
                     <Label Text="Discovered Devices" 
-                           FontSize="18" 
-                           FontAttributes="Bold" />
+                           Style="{StaticResource TitleMedium}" />
                     
                     <ActivityIndicator IsRunning="{Binding IsScanning}" 
                                      HorizontalOptions="Center"
@@ -67,29 +77,34 @@
                                   MaximumHeightRequest="300">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="models:BleDevice">
-                                <Grid Padding="10" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
-                                    <Label Grid.Row="0" Grid.Column="0"
-                                           Text="{Binding DisplayName}" 
-                                           FontSize="16" 
-                                           FontAttributes="Bold" />
-                                    
-                                    <Label Grid.Row="1" Grid.Column="0"
-                                           Text="{Binding SignalStrength}" 
-                                           FontSize="12" 
-                                           TextColor="Gray" />
-                                    
-                                    <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
-                                            Text="Connect"
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ConnectToDeviceCommand}"
-                                            CommandParameter="{Binding .}"
-                                            BackgroundColor="Green"
-                                            Padding="10,5" />
-                                </Grid>
+                                <Border Style="{StaticResource MaterialCard}" 
+                                        Margin="0,4">
+                                    <Grid Padding="16" 
+                                          RowDefinitions="Auto,Auto" 
+                                          ColumnDefinitions="*,Auto">
+                                        
+                                        <Label Grid.Row="0" Grid.Column="0"
+                                               Text="{Binding DisplayName}" 
+                                               Style="{StaticResource BodyLarge}" />
+                                        
+                                        <Label Grid.Row="1" Grid.Column="0"
+                                               Text="{Binding SignalStrength}" 
+                                               Style="{StaticResource LabelMedium}"
+                                               TextColor="{AppThemeBinding Light={StaticResource OnSurfaceVariant}, Dark={StaticResource OnSurfaceVariantDark}}" />
+                                        
+                                        <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                                                Text="Connect"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=ConnectToDeviceCommand}"
+                                                CommandParameter="{Binding .}"
+                                                VerticalOptions="Center"
+                                                Padding="16,8" />
+                                    </Grid>
+                                </Border>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
                 </VerticalStackLayout>
-            </Frame>
+            </Border>
 
         </VerticalStackLayout>
     </ScrollView>
