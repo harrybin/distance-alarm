@@ -40,23 +40,26 @@ jobs:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      - name: � Display Workflow Inputs
+      - name: 📋 Display Workflow Inputs
         if: github.event_name == 'workflow_dispatch'
         run: |
           echo "🎯 Workflow triggered manually with inputs:"
           echo "Build Type: ${{ github.event.inputs.build_type }}"
           echo "Environment: ${{ github.event.inputs.environment }}"
 
-      - name: �🔧 Setup .NET
+      - name: 🔧 Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: 📱 Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          api-level: 34
+          build-tools: 34.0.0
 
-      - name: 🛠️ Install MAUI Workload
-        run: dotnet workload install maui-android
+      - name: 🛠️ Restore MAUI Workloads
+        run: dotnet workload restore
 
       - name: 📦 Restore NuGet Packages
         run: dotnet restore ${{ env.PROJECT_PATH }}
@@ -91,6 +94,9 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: 🛠️ Restore MAUI Workloads
+        run: dotnet workload restore
+
       - name: 📦 Restore Dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }}
 
@@ -108,6 +114,14 @@ jobs:
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
+
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 🛠️ Restore MAUI Workloads
+        run: dotnet workload restore
 
       - name: Dependency Check
         run: |
