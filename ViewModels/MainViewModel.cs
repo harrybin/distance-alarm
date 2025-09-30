@@ -30,7 +30,7 @@ public partial class MainViewModel : ObservableObject
         try
         {
             System.Diagnostics.Debug.WriteLine("MainViewModel constructor starting...");
-            
+
             _bluetoothService = bluetoothService;
             _alarmService = alarmService;
             _connectionState = new ConnectionState();
@@ -56,7 +56,7 @@ public partial class MainViewModel : ObservableObject
         {
             System.Diagnostics.Debug.WriteLine($"MainViewModel constructor failed: {ex.Message}");
             System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
-            
+
             // Initialize with safe defaults to prevent total failure
             _connectionState = new ConnectionState();
             _settings = new AlarmSettings();
