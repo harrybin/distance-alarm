@@ -8,8 +8,8 @@ namespace DistanceAlarm.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    private readonly IBluetoothService _bluetoothService;
-    private readonly IAlarmService _alarmService;
+    private readonly IBluetoothService _bluetoothService = null!;
+    private readonly IAlarmService _alarmService = null!;
 
     [ObservableProperty]
     private ConnectionState _connectionState;

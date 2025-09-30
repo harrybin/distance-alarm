@@ -3,9 +3,11 @@ using Plugin.BLE;
 using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Abstractions.EventArgs;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DistanceAlarm.Services;
 
+[SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This service is designed for Android platform only")]
 public class BluetoothService : IBluetoothService
 {
     private readonly IBluetoothLE _ble;
