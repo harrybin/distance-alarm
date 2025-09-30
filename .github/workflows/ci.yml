@@ -94,6 +94,9 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: 🛠️ Install MAUI Workload
+        run: dotnet workload install maui-android
+
       - name: 📦 Restore Dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }}
 
@@ -111,6 +114,14 @@ jobs:
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
+
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 🛠️ Install MAUI Workload
+        run: dotnet workload install maui-android
 
       - name: Dependency Check
         run: |
