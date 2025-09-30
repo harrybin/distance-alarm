@@ -30,7 +30,8 @@
 		<Nullable>enable</Nullable>
 
 		<!-- Enable XAML compilation with source bindings -->
-		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+		<!--
+		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation> -->
 
 		<!-- Display name -->
 		<ApplicationTitle>Distance Alarm</ApplicationTitle>
