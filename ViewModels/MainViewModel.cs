@@ -144,9 +144,11 @@ public partial class MainViewModel : ObservableObject
             var existingDevice = DiscoveredDevices.FirstOrDefault(d => d.Id == device.Id);
             if (existingDevice != null)
             {
-                // Update existing device
+                // Update existing device with all properties that may have changed
+                existingDevice.Name = device.Name;
                 existingDevice.RssiValue = device.RssiValue;
                 existingDevice.LastSeen = device.LastSeen;
+                existingDevice.Device = device.Device;
             }
             else
             {
