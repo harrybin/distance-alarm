@@ -72,7 +72,7 @@ jobs:
               run: dotnet workload restore
 
             - name: 📦 Restore NuGet Packages
-              run: dotnet restore ${{ env.PROJECT_PATH }}
+              run: dotnet restore ${{ env.PROJECT_PATH }} --force-evaluate
 
             - name: 🔢 Update Version
               run: |
@@ -149,7 +149,7 @@ jobs:
               run: dotnet workload restore
 
             - name: 📦 Restore NuGet Packages
-              run: dotnet restore ${{ env.PROJECT_PATH }}
+              run: dotnet restore ${{ env.PROJECT_PATH }} --force-evaluate
 
             - name: 🔢 Update Version for Wear OS
               run: |

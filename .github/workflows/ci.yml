@@ -62,7 +62,7 @@ jobs:
         run: dotnet workload restore
 
       - name: 📦 Restore NuGet Packages
-        run: dotnet restore ${{ env.PROJECT_PATH }}
+        run: dotnet restore ${{ env.PROJECT_PATH }} --force-evaluate
 
       - name: 🏗️ Build Android Debug
         run: dotnet build ${{ env.PROJECT_PATH }} -f net9.0-android -c Debug
@@ -98,7 +98,7 @@ jobs:
         run: dotnet workload restore
 
       - name: 📦 Restore Dependencies
-        run: dotnet restore ${{ env.PROJECT_PATH }}
+        run: dotnet restore ${{ env.PROJECT_PATH }} --force-evaluate
 
       - name: 🔬 Run Code Analysis
         run: dotnet build ${{ env.PROJECT_PATH }} --verbosity normal --configuration Release
