@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#512BD4</color>
-    <color name="colorPrimaryDark">#2B0B98</color>
-    <color name="colorAccent">#2B0B98</color>
+    <!-- Primary brand color -->
+    <color name="colorPrimary">#1976D2</color>
+    <color name="colorPrimaryDark">#0D47A1</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+
+    <!-- Secondary brand color -->
+    <color name="colorSecondary">#1565C0</color>
+    <color name="colorSecondaryDark">#0277BD</color>
+    <color name="colorOnSecondary">#FFFFFF</color>
+
+    <!-- Legacy colors for compatibility -->
+    <color name="colorAccent">#1976D2</color>
+
+    <!-- Surface colors -->
+    <color name="colorSurface">#FAFAFA</color>
+    <color name="colorOnSurface">#212121</color>
+    <color name="colorBackground">#FFFFFF</color>
+    <color name="colorOnBackground">#212121</color>
+
+    <!-- Error colors -->
+    <color name="colorError">#D32F2F</color>
+    <color name="colorOnError">#FFFFFF</color>
+
+    <!-- Additional Material Design colors for better compatibility -->
+    <color name="colorPrimaryVariant">#0D47A1</color>
+    <color name="colorSecondaryVariant">#0277BD</color>
+    <color name="colorSurfaceVariant">#F5F5F5</color>
+    <color name="colorOnSurfaceVariant">#424242</color>
+    <color name="colorOutline">#9E9E9E</color>
+    <color name="colorOutlineVariant">#E0E0E0</color>
 </resources>

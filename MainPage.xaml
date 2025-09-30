@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:DistanceAlarm.ViewModels"
@@ -11,29 +11,29 @@
         <VerticalStackLayout Spacing="16" Padding="16">
 
             <!-- Status Card -->
-            <Border Style="{StaticResource MaterialElevatedCard}">
+            <Frame BackgroundColor="LightGray" Padding="16">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="Connection Status" 
-                           Style="{StaticResource TitleMedium}"
+                           FontSize="18"
                            HorizontalOptions="Center" />
                     
                     <Label Text="{Binding StatusMessage}" 
-                           Style="{StaticResource BodyLarge}"
+                           FontSize="16"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center" />
                     
                     <Label Text="{Binding ConnectionState.ConnectedDevice.DisplayName, StringFormat='Connected to: {0}'}"
-                           Style="{StaticResource BodyMedium}"
+                           FontSize="14"
                            HorizontalOptions="Center"
                            IsVisible="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNotNullConverter}}" />
                 </VerticalStackLayout>
-            </Border>
+            </Frame>
 
             <!-- Control Buttons Card -->
-            <Border Style="{StaticResource MaterialCard}">
+            <Frame BackgroundColor="LightGray" Padding="16">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="Controls" 
-                           Style="{StaticResource TitleMedium}" />
+                           FontSize="18" />
                     
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" 
                           ColumnSpacing="12" RowSpacing="12">
@@ -46,28 +46,25 @@
                         <Button Grid.Row="0" Grid.Column="1"
                                 Text="Stop Scanning" 
                                 Command="{Binding StopScanCommand}"
-                                IsEnabled="{Binding IsScanning}"
-                                Style="{StaticResource SecondaryButton}" />
+                                IsEnabled="{Binding IsScanning}" />
                         
                         <Button Grid.Row="1" Grid.Column="0"
                                 Text="Disconnect" 
                                 Command="{Binding DisconnectCommand}"
-                                IsEnabled="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNotNullConverter}}"
-                                Style="{StaticResource OutlinedButton}" />
+                                IsEnabled="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNotNullConverter}}" />
                         
                         <Button Grid.Row="1" Grid.Column="1"
                                 Text="Test Alarm" 
-                                Command="{Binding TestAlarmCommand}"
-                                Style="{StaticResource TextButton}" />
+                                Command="{Binding TestAlarmCommand}" />
                     </Grid>
                 </VerticalStackLayout>
-            </Border>
+            </Frame>
 
             <!-- Discovered Devices Card -->
-            <Border Style="{StaticResource MaterialCard}">
+            <Frame BackgroundColor="LightGray" Padding="16">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="Discovered Devices" 
-                           Style="{StaticResource TitleMedium}" />
+                           FontSize="18" />
                     
                     <ActivityIndicator IsRunning="{Binding IsScanning}" 
                                      HorizontalOptions="Center"
@@ -77,20 +74,20 @@
                                   MaximumHeightRequest="300">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="models:BleDevice">
-                                <Border Style="{StaticResource MaterialCard}" 
-                                        Margin="0,4">
-                                    <Grid Padding="16" 
-                                          RowDefinitions="Auto,Auto" 
+                                <Frame BackgroundColor="White" 
+                                       Padding="16"
+                                       Margin="0,4">
+                                    <Grid RowDefinitions="Auto,Auto" 
                                           ColumnDefinitions="*,Auto">
                                         
                                         <Label Grid.Row="0" Grid.Column="0"
                                                Text="{Binding DisplayName}" 
-                                               Style="{StaticResource BodyLarge}" />
+                                               FontSize="16" />
                                         
                                         <Label Grid.Row="1" Grid.Column="0"
                                                Text="{Binding SignalStrength}" 
-                                               Style="{StaticResource LabelMedium}"
-                                               TextColor="{AppThemeBinding Light={StaticResource OnSurfaceVariant}, Dark={StaticResource OnSurfaceVariantDark}}" />
+                                               FontSize="12"
+                                               TextColor="Gray" />
                                         
                                         <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
                                                 Text="Connect"
@@ -99,12 +96,12 @@
                                                 VerticalOptions="Center"
                                                 Padding="16,8" />
                                     </Grid>
-                                </Border>
+                                </Frame>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
                 </VerticalStackLayout>
-            </Border>
+            </Frame>
 
         </VerticalStackLayout>
     </ScrollView>
