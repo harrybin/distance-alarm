@@ -21,7 +21,8 @@
             },
             "options": {
                 "statusbar": {
-                    "color": "#1B5E20"
+                    "color": "#1B5E20",
+                    "hide": true
                 }
             },
             "presentation": {
@@ -49,7 +50,8 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#1B5E20"
+                    "color": "#1B5E20",
+                    "hide": true
                 }
             },
             "presentation": {
@@ -64,7 +66,7 @@
             "detail": "Build for Android devices (Release)"
         },
         {
-            "label": "📱 Install Android",
+            "label": "📱 Build and Run for Android",
             "type": "shell",
             "command": "dotnet",
             "args": [
@@ -81,7 +83,7 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#1B5E20"
+                    "color": "#1A237E"
                 }
             },
             "presentation": {
@@ -97,7 +99,7 @@
             "dependsOn": "🤖 Android Debug"
         },
         {
-            "label": "⌚ Install Wear OS",
+            "label": "⌚ Build for Wear OS",
             "type": "shell",
             "command": "dotnet",
             "args": [
@@ -115,7 +117,7 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#1A237E"
+                    "color": "#1A237E",
                 }
             },
             "presentation": {
@@ -131,17 +133,19 @@
             "dependsOn": "🤖 Android Debug"
         },
         {
-            "label": "🔧 Install Wear OS APK via ADB",
+            "label": "⌚ Install Wear OS via ADB",
             "type": "shell",
             "command": "powershell",
             "args": [
-                "-Command",
-                "$devices = adb devices -l | Select-String 'OPWWE251|wear'; if ($devices) { $deviceId = ($devices[0] -split '\\s+')[0]; adb -s $deviceId install -r 'bin\\Debug\\net9.0-android\\com.distancealarm.app-Signed.apk' } else { Write-Host 'No Wear OS device found. Connect your Wear OS device first.' -ForegroundColor Red }"
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                ".vscode/install-wearos.ps1"
             ],
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#1A237E"
+                    "color": "#6A1B9A"
                 }
             },
             "presentation": {
@@ -152,8 +156,8 @@
                 "showReuseMessage": true,
                 "clear": false
             },
-            "detail": "Install APK on Wear OS device via ADB (auto-detects device)",
-            "dependsOn": "⌚ Install Wear OS"
+            "detail": "Install APK directly on Wear OS device via ADB (auto-detects Wear OS devices)",
+            // "dependsOn": "⌚ Install Wear OS"
         },
         {
             "label": "📦 Deploy Android APK",
@@ -172,7 +176,8 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#1B5E20"
+                    "color": "#1B5E20",
+                    "hide": true
                 }
             },
             "presentation": {
@@ -204,7 +209,8 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#1A237E"
+                    "color": "#1A237E",
+                    "hide": true
                 }
             },
             "presentation": {
@@ -228,7 +234,8 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#B71C1C"
+                    "color": "#B71C1C",
+                    "hide": true
                 }
             },
             "presentation": {
@@ -252,7 +259,8 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#006064"
+                    "color": "#006064",
+                    "hide": true
                 }
             },
             "presentation": {
@@ -302,7 +310,8 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#1B5E20"
+                    "color": "#1B5E20",
+                    "hide": true
                 }
             },
             "presentation": {
@@ -329,7 +338,8 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#1A237E"
+                    "color": "#1A237E",
+                    "hide": true
                 }
             },
             "presentation": {
@@ -363,7 +373,8 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#4CAF50"
+                    "color": "#4CAF50",
+                    "hide": true
                 }
             },
             "presentation": {
@@ -396,7 +407,8 @@
             "group": "build",
             "options": {
                 "statusbar": {
-                    "color": "#FF9800"
+                    "color": "#FF9800",
+                    "hide": true
                 }
             },
             "presentation": {
