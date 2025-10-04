@@ -169,9 +169,36 @@ public class BluetoothService : IBluetoothService
 
     public async Task<List<BleDevice>> GetPairedDevicesAsync()
     {
-        // This would typically return bonded/paired devices
-        // Implementation depends on platform-specific APIs
-        return new List<BleDevice>();
+        var pairedDevices = new List<BleDevice>();
+        
+        try
+        {
+            // Get currently connected devices from the BLE adapter
+            var connectedDevices = _adapter.ConnectedDevices;
+            
+            foreach (var device in connectedDevices)
+            {
+                var bleDevice = new BleDevice
+                {
+                    Id = device.Id.ToString(),
+                    Name = !string.IsNullOrWhiteSpace(device.Name) ? device.Name.Trim() : "Unknown",
+                    MacAddress = device.Id.ToString(),
+                    RssiValue = device.Rssi,
+                    Device = device,
+                    LastSeen = DateTime.Now,
+                    IsConnected = true
+                };
+                
+                pairedDevices.Add(bleDevice);
+                System.Diagnostics.Debug.WriteLine($"Found connected device: {bleDevice.DisplayName} ({bleDevice.Id})");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error getting paired/connected devices: {ex.Message}");
+        }
+        
+        return pairedDevices;
     }
 
     private void OnDeviceAdvertised(object? sender, DeviceEventArgs e)

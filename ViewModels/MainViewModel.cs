@@ -51,6 +51,20 @@ public partial class MainViewModel : ObservableObject
             }
 
             System.Diagnostics.Debug.WriteLine("MainViewModel constructor completed successfully");
+            
+            // Load connected devices automatically on startup
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(1000); // Small delay to allow services to initialize
+                    await LoadConnectedDevicesAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Auto-load connected devices failed: {ex.Message}");
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -167,6 +181,47 @@ public partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             StatusMessage = $"Test alarm failed: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoadConnectedDevicesAsync()
+    {
+        try
+        {
+            var connectedDevices = await _bluetoothService.GetPairedDevicesAsync();
+            
+            Application.Current?.Dispatcher.Dispatch(() =>
+            {
+                foreach (var device in connectedDevices)
+                {
+                    var existingDevice = DiscoveredDevices.FirstOrDefault(d => d.Id == device.Id);
+                    if (existingDevice == null)
+                    {
+                        DiscoveredDevices.Add(device);
+                    }
+                    else
+                    {
+                        // Update existing device as connected
+                        existingDevice.IsConnected = true;
+                        existingDevice.LastSeen = device.LastSeen;
+                    }
+                }
+                
+                if (connectedDevices.Any())
+                {
+                    StatusMessage = $"Loaded {connectedDevices.Count} connected device(s)";
+                }
+                else
+                {
+                    StatusMessage = "No connected devices found";
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to load connected devices: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"LoadConnectedDevicesAsync error: {ex}");
         }
     }
 
