@@ -1,0 +1,229 @@
+name: 📱 Build APKs
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Build configuration"
+        required: false
+        default: "both"
+        type: choice
+        options:
+          - both
+          - android-only
+          - wearos-only
+
+env:
+  DOTNET_VERSION: "9.0.x"
+  PROJECT_PATH: "./DistanceAlarm.csproj"
+  APP_NAME: "DistanceAlarm"
+  PACKAGE_ID: "com.distancealarm.app"
+
+jobs:
+  build-android-apk:
+    name: 📱 Build Android APK
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.inputs.build_type || github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'android-only' }}
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 📱 Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 34
+          build-tools: 34.0.0
+
+      - name: 📋 Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: 🛠️ Restore MAUI Workloads
+        run: dotnet workload restore
+
+      - name: 📦 Restore NuGet Packages
+        run: dotnet restore ${{ env.PROJECT_PATH }} --force-evaluate
+
+      - name: 🏗️ Build Android Release APK
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} \
+            -f net9.0-android \
+            -c Release \
+            -p:AndroidPackageFormat=apk \
+            -p:AndroidKeyStore=false \
+            -o ./artifacts/android/
+
+      - name: 📱 Build Android Release AAB
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} \
+            -f net9.0-android \
+            -c Release \
+            -p:AndroidPackageFormat=aab \
+            -p:AndroidKeyStore=false \
+            -o ./artifacts/android-aab/
+
+      - name: 🎯 Prepare Android Artifacts
+        run: |
+          mkdir -p ./release-artifacts/android
+          
+          # Generate timestamp for file naming
+          TIMESTAMP=$(date +"%Y%m%d-%H%M")
+          COMMIT_SHORT=$(echo ${{ github.sha }} | cut -c1-7)
+          
+          # Find and copy APK with timestamp
+          find ./artifacts/android -name "*.apk" -exec cp {} ./release-artifacts/android/${{ env.APP_NAME }}-android-${TIMESTAMP}-${COMMIT_SHORT}.apk \;
+          
+          # Find and copy AAB with timestamp
+          find ./artifacts/android-aab -name "*.aab" -exec cp {} ./release-artifacts/android/${{ env.APP_NAME }}-android-${TIMESTAMP}-${COMMIT_SHORT}.aab \;
+          
+          # Create checksums
+          cd ./release-artifacts/android
+          sha256sum *.apk *.aab > checksums-android.txt
+          ls -la
+
+      - name: 📊 Upload Android APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apks-${{ github.run_number }}
+          path: ./release-artifacts/android/
+          retention-days: 30
+
+  build-wearos-apk:
+    name: ⌚ Build Wear OS APK
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.inputs.build_type || github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'wearos-only' }}
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 📱 Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 34
+          build-tools: 34.0.0
+
+      - name: 📋 Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: 🛠️ Restore MAUI Workloads
+        run: dotnet workload restore
+
+      - name: 📦 Restore NuGet Packages
+        run: dotnet restore ${{ env.PROJECT_PATH }} --force-evaluate
+
+      - name: ⌚ Build Wear OS Release APK
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} \
+            -f net9.0-android \
+            -c Release \
+            -p:AndroidPackageFormat=apk \
+            -p:AndroidKeyStore=false \
+            -p:WearOSTarget=true \
+            -o ./artifacts/wearos/
+
+      - name: 🎯 Prepare Wear OS Artifacts
+        run: |
+          mkdir -p ./release-artifacts/wearos
+          
+          # Generate timestamp for file naming
+          TIMESTAMP=$(date +"%Y%m%d-%H%M")
+          COMMIT_SHORT=$(echo ${{ github.sha }} | cut -c1-7)
+          
+          # Find and copy APK with timestamp
+          find ./artifacts/wearos -name "*.apk" -exec cp {} ./release-artifacts/wearos/${{ env.APP_NAME }}-wearos-${TIMESTAMP}-${COMMIT_SHORT}.apk \;
+          
+          # Create checksums
+          cd ./release-artifacts/wearos
+          sha256sum *.apk > checksums-wearos.txt
+          ls -la
+
+      - name: 📊 Upload Wear OS APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wearos-apks-${{ github.run_number }}
+          path: ./release-artifacts/wearos/
+          retention-days: 30
+
+  build-summary:
+    name: 📋 Build Summary
+    runs-on: ubuntu-latest
+    needs: [build-android-apk, build-wearos-apk]
+    if: always()
+
+    steps:
+      - name: 📊 Create Build Summary
+        run: |
+          echo "## 📱 APK Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Artifacts Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.build-android-apk.result }}" == "success" ]]; then
+            echo "✅ **Android APK** - Ready for download" >> $GITHUB_STEP_SUMMARY
+            echo "- 📱 APK file for direct installation" >> $GITHUB_STEP_SUMMARY
+            echo "- 📦 AAB file for Play Store submission" >> $GITHUB_STEP_SUMMARY
+            echo "- 🛡️ SHA256 checksums included" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Android APK** - Build failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.build-wearos-apk.result }}" == "success" ]]; then
+            echo "✅ **Wear OS APK** - Ready for download" >> $GITHUB_STEP_SUMMARY
+            echo "- ⌚ Optimized for Wear OS devices" >> $GITHUB_STEP_SUMMARY
+            echo "- 🛡️ SHA256 checksums included" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Wear OS APK** - Build failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📥 How to Download" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to the **Actions** tab in this repository" >> $GITHUB_STEP_SUMMARY
+          echo "2. Click on this workflow run" >> $GITHUB_STEP_SUMMARY
+          echo "3. Scroll down to **Artifacts** section" >> $GITHUB_STEP_SUMMARY
+          echo "4. Download the APK files you need:" >> $GITHUB_STEP_SUMMARY
+          echo "   - \`android-apks-${{ github.run_number }}\` for Android devices" >> $GITHUB_STEP_SUMMARY
+          echo "   - \`wearos-apks-${{ github.run_number }}\` for Wear OS devices" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📱 Installation Instructions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Android:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download and unzip the android-apks artifact" >> $GITHUB_STEP_SUMMARY
+          echo "2. Enable 'Unknown Sources' in Android settings" >> $GITHUB_STEP_SUMMARY
+          echo "3. Install the APK file" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Wear OS:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download and unzip the wearos-apks artifact" >> $GITHUB_STEP_SUMMARY
+          echo "2. Enable Developer Mode on your Wear OS device" >> $GITHUB_STEP_SUMMARY
+          echo "3. Use ADB to install: \`adb install DistanceAlarm-wearos-*.apk\`" >> $GITHUB_STEP_SUMMARY

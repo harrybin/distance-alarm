@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+	
+	<!-- Standard Android permissions for BLE -->
+	<uses-permission android:name="android.permission.BLUETOOTH" />
+	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	
+	<!-- Android 12+ BLE permissions -->
+	<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+	<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+	<uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+	
+	<!-- Notifications and vibration -->
+	<uses-permission android:name="android.permission.VIBRATE" />
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+	
+	<!-- Wear OS specific features (will be ignored on phones) -->
+	<uses-feature android:name="android.hardware.type.watch" android:required="false" />
+	
+	<!-- Application-level configuration -->
+	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:supportsRtl="true">
+		
+		<!-- Wear OS specific metadata (ignored on phones) -->
+		<meta-data android:name="com.google.android.wearable.standalone" android:value="true" />
+		
+	</application>
+	
+</manifest>

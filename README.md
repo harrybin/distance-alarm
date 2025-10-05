@@ -252,6 +252,29 @@ Automatically triggered on:
 - 🔒 **Security Scan** - Vulnerability detection in dependencies
 - 📊 **Build Status Summary** - Comprehensive status reporting
 
+### 📱 APK Build Pipeline
+
+Automatically builds downloadable APKs on every push to main/develop:
+
+**Build Features:**
+
+- 🔄 **Automatic Builds** - Triggered on push to main/develop branches
+- 📱 **Android APK & AAB** - Ready for immediate download and testing
+- ⌚ **Wear OS APK** - Optimized builds for Wear OS devices
+- 🏷️ **Timestamped Artifacts** - Easy identification with build numbers
+- 📥 **GitHub Actions Artifacts** - Direct download from workflow runs
+- 🛡️ **SHA256 Checksums** - Security verification for all files
+
+### 🎯 How to Download Development APKs
+
+1. **Navigate to Actions tab** in your GitHub repository
+2. **Select "📱 Build APKs"** workflow
+3. **Click on the latest successful run**
+4. **Scroll down to Artifacts** section
+5. **Download the APK package** you need:
+   - `android-apks-[run_number]` - For Android devices
+   - `wearos-apks-[run_number]` - For Wear OS devices
+
 ### 🚀 Release Pipeline
 
 Manually triggered via GitHub Actions with approval:
