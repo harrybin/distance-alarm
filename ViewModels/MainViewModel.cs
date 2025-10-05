@@ -211,6 +211,24 @@ public partial class MainViewModel : ObservableObject
                 if (connectedDevices.Any())
                 {
                     StatusMessage = $"Loaded {connectedDevices.Count} connected device(s)";
+                    
+                    // If a connection was recognized, start pinging automatically
+                    var connectionState = _bluetoothService.GetConnectionState();
+                    if (connectionState.Status == ConnectionStatus.Connected && connectionState.ConnectedDevice != null)
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _bluetoothService.StartPingingAsync(Settings.PingInterval);
+                                System.Diagnostics.Debug.WriteLine("Started pinging for existing connection");
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Failed to start pinging for existing connection: {ex.Message}");
+                            }
+                        });
+                    }
                 }
                 else
                 {
