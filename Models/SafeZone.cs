@@ -100,6 +100,13 @@ public class SafeZone : INotifyPropertyChanged
         if (!IsEnabled)
             return false;
 
+        // Validate safe zone coordinates are set (not default 0,0)
+        if (Math.Abs(Latitude) < 0.0001 && Math.Abs(Longitude) < 0.0001)
+        {
+            System.Diagnostics.Debug.WriteLine($"Safe zone '{Name}' has invalid coordinates (0,0) - disabling");
+            return false;
+        }
+
         var distance = CalculateDistance(latitude, longitude, Latitude, Longitude);
         return distance <= RadiusMeters;
     }
@@ -109,6 +116,7 @@ public class SafeZone : INotifyPropertyChanged
     /// </summary>
     private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
     {
+        // Mean radius of Earth in kilometers (used in Haversine formula for great-circle distance)
         const double earthRadiusKm = 6371;
         
         var dLat = DegreesToRadians(lat2 - lat1);

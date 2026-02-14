@@ -50,12 +50,14 @@ public partial class MainViewModel : ObservableObject
             _connectionState = new ConnectionState();
             _settings = new AlarmSettings();
 
-            // Add default safe zone (home) - user can configure later
+            // Add default safe zone (home) - user MUST configure location before enabling
             _settings.SafeZones.Add(new SafeZone 
             { 
                 Name = "Home",
+                Latitude = 0,  // Invalid default - must be set by user
+                Longitude = 0,
                 RadiusMeters = 100,
-                IsEnabled = false // Disabled by default until user sets location
+                IsEnabled = false // Disabled by default - requires location setup
             });
 
             // Subscribe to service events with error handling
@@ -167,10 +169,10 @@ public partial class MainViewModel : ObservableObject
             {
                 StatusMessage = $"Connected to {device.DisplayName}";
                 
-                // Set failed ping threshold from settings
-                if (_bluetoothService is BluetoothService bleService)
+                // Set failed ping threshold from settings using configuration interface
+                if (_bluetoothService is IBluetoothServiceConfiguration configService)
                 {
-                    bleService.SetFailedPingThreshold(Settings.FailedPingThreshold);
+                    configService.SetFailedPingThreshold(Settings.FailedPingThreshold);
                 }
                 
                 await _bluetoothService.StartPingingAsync(Settings.PingInterval);

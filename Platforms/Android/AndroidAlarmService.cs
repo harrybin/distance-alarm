@@ -157,7 +157,7 @@ public class AndroidAlarmService : IAlarmService
                     global::Android.OS.WakeLockFlags.OnAfterRelease,
                     "DistanceAlarm::AlarmWakeLock");
                 
-                _screenWakeLock?.Acquire(TimeSpan.FromMinutes(1).Milliseconds); // Auto-release after 1 minute
+                _screenWakeLock?.Acquire((long)TimeSpan.FromMinutes(1).TotalMilliseconds); // Auto-release after 1 minute
                 System.Diagnostics.Debug.WriteLine("Screen wake lock acquired");
             }
         }
