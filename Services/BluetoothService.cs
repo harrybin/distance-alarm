@@ -191,6 +191,15 @@ public class BluetoothService : IBluetoothService
                 
                 pairedDevices.Add(bleDevice);
                 System.Diagnostics.Debug.WriteLine($"Found connected device: {bleDevice.DisplayName} ({bleDevice.Id})");
+                
+                // If no device is currently tracked as connected, set the first found device as connected
+                if (_connectedDevice == null && pairedDevices.Count == 1)
+                {
+                    _connectedDevice = device;
+                    _connectionState.ConnectedDevice = bleDevice;
+                    UpdateConnectionStatus(ConnectionStatus.Connected, $"Recognized existing connection to {bleDevice.DisplayName}");
+                    System.Diagnostics.Debug.WriteLine($"Set existing connection state for device: {bleDevice.DisplayName}");
+                }
             }
         }
         catch (Exception ex)
