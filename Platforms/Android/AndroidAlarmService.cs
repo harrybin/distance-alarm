@@ -1,4 +1,5 @@
 using Android.Content;
+using Android.Media;
 using AndroidX.Core.App;
 using DistanceAlarm.Models;
 using DistanceAlarm.Services;
@@ -10,6 +11,8 @@ public class AndroidAlarmService : IAlarmService
 {
     private bool _isAlarmActive;
     private const int NotificationId = 1001;
+    private MediaPlayer? _mediaPlayer;
+    private global::Android.OS.PowerManager.WakeLock? _screenWakeLock;
 
     public bool IsAlarmActive => _isAlarmActive;
 
@@ -19,6 +22,9 @@ public class AndroidAlarmService : IAlarmService
             return;
 
         _isAlarmActive = true;
+
+        // Wake up the screen first so user notices the alarm
+        await WakeUpScreenAsync();
 
         var tasks = new List<Task>();
 
@@ -43,7 +49,23 @@ public class AndroidAlarmService : IAlarmService
     public async Task StopAlarmAsync()
     {
         _isAlarmActive = false;
-        // Cancel any ongoing alarms
+        
+        // Stop sound playback
+        try
+        {
+            _mediaPlayer?.Stop();
+            _mediaPlayer?.Release();
+            _mediaPlayer = null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error stopping media player: {ex.Message}");
+        }
+
+        // Release screen wake lock
+        ReleaseScreenWakeLock();
+
+        // Cancel notification
         var context = Platform.CurrentActivity?.ApplicationContext ?? global::Android.App.Application.Context;
         var notificationManager = NotificationManagerCompat.From(context);
         notificationManager.Cancel(NotificationId);
@@ -80,13 +102,84 @@ public class AndroidAlarmService : IAlarmService
     {
         try
         {
-            // Implementation for playing custom sounds
-            // For now, use system notification sound
-            await Task.Delay(100);
+            var context = Platform.CurrentActivity?.ApplicationContext ?? global::Android.App.Application.Context;
+            
+            // Stop any existing playback
+            _mediaPlayer?.Stop();
+            _mediaPlayer?.Release();
+
+            // Create media player with default alarm sound
+            _mediaPlayer = new MediaPlayer();
+            
+            // Use system alarm sound or notification sound
+            var alarmUri = RingtoneManager.GetDefaultUri(RingtoneType.Alarm);
+            if (alarmUri == null)
+            {
+                alarmUri = RingtoneManager.GetDefaultUri(RingtoneType.Notification);
+            }
+
+            if (alarmUri != null)
+            {
+                _mediaPlayer.SetDataSource(context, alarmUri);
+                _mediaPlayer.SetAudioAttributes(new AudioAttributes.Builder()
+                    .SetUsage(AudioUsageKind.Alarm)
+                    .SetContentType(AudioContentType.Sonification)
+                    .Build());
+                
+                _mediaPlayer.Looping = true; // Loop until stopped
+                _mediaPlayer.SetVolume((float)volume, (float)volume);
+                
+                _mediaPlayer.Prepare();
+                _mediaPlayer.Start();
+                
+                System.Diagnostics.Debug.WriteLine("Alarm sound started");
+            }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Sound playback error: {ex.Message}");
+        }
+    }
+
+    private async Task WakeUpScreenAsync()
+    {
+        try
+        {
+            var context = Platform.CurrentActivity?.ApplicationContext ?? global::Android.App.Application.Context;
+            var powerManager = context.GetSystemService(Context.PowerService) as global::Android.OS.PowerManager;
+            
+            if (powerManager != null)
+            {
+                // Acquire wake lock to turn on screen
+                _screenWakeLock = powerManager.NewWakeLock(
+                    global::Android.OS.WakeLockFlags.ScreenBright | 
+                    global::Android.OS.WakeLockFlags.AcquireCausesWakeup |
+                    global::Android.OS.WakeLockFlags.OnAfterRelease,
+                    "DistanceAlarm::AlarmWakeLock");
+                
+                _screenWakeLock?.Acquire((long)TimeSpan.FromMinutes(1).TotalMilliseconds); // Auto-release after 1 minute
+                System.Diagnostics.Debug.WriteLine("Screen wake lock acquired");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to wake screen: {ex.Message}");
+        }
+    }
+
+    private void ReleaseScreenWakeLock()
+    {
+        try
+        {
+            if (_screenWakeLock?.IsHeld == true)
+            {
+                _screenWakeLock.Release();
+                System.Diagnostics.Debug.WriteLine("Screen wake lock released");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error releasing screen wake lock: {ex.Message}");
         }
     }
 

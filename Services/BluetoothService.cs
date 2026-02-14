@@ -8,7 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace DistanceAlarm.Services;
 
 [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This service is designed for Android platform only")]
-public class BluetoothService : IBluetoothService
+public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguration, IDisposable
 {
     private readonly IBluetoothLE _ble;
     private readonly IAdapter _adapter;
@@ -16,10 +16,16 @@ public class BluetoothService : IBluetoothService
     private IDevice? _connectedDevice;
     private Timer? _pingTimer;
     private CancellationTokenSource? _scanCancellationToken;
+    private int _reconnectAttempts = 0;
+    private readonly SemaphoreSlim _connectionLock = new(1, 1);
+    private bool _isReconnecting = false;
+    private bool _disposed = false;
+    private int _failedPingThreshold = 2; // Default threshold
 
     public event EventHandler<BleDevice>? DeviceDiscovered;
     public event EventHandler<ConnectionState>? ConnectionStatusChanged;
     public event EventHandler? ConnectionLost;
+    public event EventHandler<int>? RssiUpdated; // New event for RSSI monitoring
 
     public BluetoothService()
     {
@@ -137,6 +143,14 @@ public class BluetoothService : IBluetoothService
         _pingTimer = null;
     }
 
+    /// <summary>
+    /// Sets the failed ping threshold for connection loss detection
+    /// </summary>
+    public void SetFailedPingThreshold(int threshold)
+    {
+        _failedPingThreshold = Math.Max(1, threshold); // Ensure at least 1
+    }
+
     private async Task PingDevice()
     {
         if (_connectedDevice == null)
@@ -144,21 +158,121 @@ public class BluetoothService : IBluetoothService
 
         try
         {
-            // Try to read device information or send a ping
-            var services = await _connectedDevice.GetServicesAsync();
-            _connectionState.LastPingTime = DateTime.Now;
-            _connectionState.FailedPingCount = 0;
+            // Use lock to prevent concurrent access during ping
+            await _connectionLock.WaitAsync();
+
+            try
+            {
+                // Check connection state first - more lightweight than GetServicesAsync
+                if (_connectedDevice.State != Plugin.BLE.Abstractions.DeviceState.Connected)
+                {
+                    throw new Exception("Device not connected");
+                }
+
+                // Update RSSI to monitor signal strength
+                await _connectedDevice.UpdateRssiAsync();
+                var currentRssi = _connectedDevice.Rssi;
+                
+                _connectionState.LastPingTime = DateTime.Now;
+                _connectionState.FailedPingCount = 0;
+                _reconnectAttempts = 0; // Reset reconnect attempts on successful ping
+
+                // Notify RSSI update for distance monitoring
+                RssiUpdated?.Invoke(this, currentRssi);
+                
+                System.Diagnostics.Debug.WriteLine($"Ping successful - RSSI: {currentRssi} dBm");
+            }
+            finally
+            {
+                _connectionLock.Release();
+            }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Ping failed: {ex.Message}");
             _connectionState.FailedPingCount++;
 
-            // If multiple pings fail, consider connection lost
-            if (_connectionState.FailedPingCount >= 3)
+            // Connection is likely lost - trigger appropriate handling
+            if (_connectionState.FailedPingCount >= _failedPingThreshold)
             {
-                UpdateConnectionStatus(ConnectionStatus.Disconnected, "Connection lost");
-                ConnectionLost?.Invoke(this, EventArgs.Empty);
+                await HandleConnectionLossAsync();
             }
+        }
+    }
+
+    /// <summary>
+    /// Handles connection loss with optional automatic reconnection
+    /// </summary>
+    private async Task HandleConnectionLossAsync()
+    {
+        if (_isReconnecting)
+            return; // Already handling reconnection
+
+        UpdateConnectionStatus(ConnectionStatus.Disconnected, "Connection lost");
+        ConnectionLost?.Invoke(this, EventArgs.Empty);
+        
+        System.Diagnostics.Debug.WriteLine($"Connection lost - failed pings: {_connectionState.FailedPingCount}");
+    }
+
+    /// <summary>
+    /// Attempts to reconnect to the device with exponential backoff
+    /// </summary>
+    public async Task<bool> AttemptReconnectAsync(int maxAttempts = 5, int initialDelaySeconds = 2)
+    {
+        if (_connectedDevice == null || _connectionState.ConnectedDevice == null)
+            return false;
+
+        _isReconnecting = true;
+        UpdateConnectionStatus(ConnectionStatus.Reconnecting, "Attempting to reconnect...");
+
+        try
+        {
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                _reconnectAttempts = attempt + 1;
+                
+                // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+                var delay = initialDelaySeconds * (int)Math.Pow(2, attempt);
+                System.Diagnostics.Debug.WriteLine($"Reconnect attempt {_reconnectAttempts}/{maxAttempts} - waiting {delay}s");
+                
+                UpdateConnectionStatus(ConnectionStatus.Reconnecting, 
+                    $"Reconnecting... (Attempt {_reconnectAttempts}/{maxAttempts})");
+
+                await Task.Delay(TimeSpan.FromSeconds(delay));
+
+                try
+                {
+                    // Try to reconnect
+                    await _adapter.ConnectToDeviceAsync(_connectedDevice);
+                    
+                    if (_connectedDevice.State == Plugin.BLE.Abstractions.DeviceState.Connected)
+                    {
+                        _connectionState.FailedPingCount = 0;
+                        _reconnectAttempts = 0;
+                        UpdateConnectionStatus(ConnectionStatus.Connected, 
+                            $"Reconnected to {_connectionState.ConnectedDevice.DisplayName}");
+                        
+                        System.Diagnostics.Debug.WriteLine("Reconnection successful");
+                        _isReconnecting = false;
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Reconnect attempt {_reconnectAttempts} failed: {ex.Message}");
+                }
+            }
+
+            // All reconnection attempts failed
+            UpdateConnectionStatus(ConnectionStatus.Failed, 
+                $"Reconnection failed after {maxAttempts} attempts");
+            
+            System.Diagnostics.Debug.WriteLine("All reconnection attempts failed");
+            return false;
+        }
+        finally
+        {
+            _isReconnecting = false;
         }
     }
 
@@ -258,5 +372,25 @@ public class BluetoothService : IBluetoothService
         _connectionState.Status = status;
         _connectionState.StatusMessage = message;
         ConnectionStatusChanged?.Invoke(this, _connectionState);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        // Unsubscribe from events
+        _adapter.DeviceAdvertised -= OnDeviceAdvertised;
+        _adapter.DeviceConnected -= OnDeviceConnected;
+        _adapter.DeviceDisconnected -= OnDeviceDisconnected;
+
+        // Cleanup resources
+        _pingTimer?.Dispose();
+        _scanCancellationToken?.Dispose();
+        _connectionLock?.Dispose();
+
+        System.Diagnostics.Debug.WriteLine("BluetoothService disposed");
     }
 }

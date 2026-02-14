@@ -20,7 +20,16 @@ public static class MauiProgram
 
 		// Register Services
 		builder.Services.AddSingleton<IBluetoothService, BluetoothService>();
+		builder.Services.AddSingleton<ILocationService, LocationService>();
+
+#if ANDROID
+		// Register Android-specific alarm service
+		builder.Services.AddSingleton<IAlarmService, Platforms.Android.AndroidAlarmService>();
+		builder.Services.AddSingleton<IBackgroundService, Platforms.Android.AndroidBackgroundService>();
+#else
+		// Fallback for other platforms
 		builder.Services.AddSingleton<IAlarmService, AlarmService>();
+#endif
 
 		// Register ViewModels
 		builder.Services.AddSingleton<MainViewModel>();
