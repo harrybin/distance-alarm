@@ -3,6 +3,7 @@ using Android.Content;
 using Android.OS;
 using Android.Provider;
 using AndroidNet = Android.Net;
+using AndroidApp = Android.App.Application;
 
 namespace DistanceAlarm.Platforms.Android;
 
@@ -19,7 +20,7 @@ public class AndroidBackgroundService : DistanceAlarm.Services.IBackgroundServic
 
         try
         {
-            var context = Platform.CurrentActivity?.ApplicationContext ?? Application.Context;
+            var context = Platform.CurrentActivity?.ApplicationContext ?? AndroidApp.Context;
 
             // Request battery optimization exemption before starting
             await RequestBatteryOptimizationExemptionAsync();
@@ -53,7 +54,7 @@ public class AndroidBackgroundService : DistanceAlarm.Services.IBackgroundServic
 
         try
         {
-            var context = Platform.CurrentActivity?.ApplicationContext ?? Application.Context;
+            var context = Platform.CurrentActivity?.ApplicationContext ?? AndroidApp.Context;
             var serviceIntent = new Intent(context, typeof(BluetoothMonitoringService));
             context.StopService(serviceIntent);
 
@@ -70,7 +71,7 @@ public class AndroidBackgroundService : DistanceAlarm.Services.IBackgroundServic
     {
         try
         {
-            var context = Platform.CurrentActivity?.ApplicationContext ?? Application.Context;
+            var context = Platform.CurrentActivity?.ApplicationContext ?? AndroidApp.Context;
             var powerManager = context.GetSystemService(Context.PowerService) as PowerManager;
 
             if (Build.VERSION.SdkInt >= BuildVersionCodes.M && powerManager != null)

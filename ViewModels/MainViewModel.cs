@@ -166,6 +166,13 @@ public partial class MainViewModel : ObservableObject
             if (success)
             {
                 StatusMessage = $"Connected to {device.DisplayName}";
+                
+                // Set failed ping threshold from settings
+                if (_bluetoothService is BluetoothService bleService)
+                {
+                    bleService.SetFailedPingThreshold(Settings.FailedPingThreshold);
+                }
+                
                 await _bluetoothService.StartPingingAsync(Settings.PingInterval);
             }
             else

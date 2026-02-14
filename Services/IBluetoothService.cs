@@ -21,3 +21,9 @@ public interface IBluetoothService
     ConnectionState GetConnectionState();
     Task<List<BleDevice>> GetPairedDevicesAsync();
 }
+
+// Extension interface for configuration (implemented by BluetoothService)
+public interface IBluetoothServiceConfiguration
+{
+    void SetFailedPingThreshold(int threshold);
+}

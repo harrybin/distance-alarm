@@ -8,7 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace DistanceAlarm.Services;
 
 [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This service is designed for Android platform only")]
-public class BluetoothService : IBluetoothService
+public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguration, IDisposable
 {
     private readonly IBluetoothLE _ble;
     private readonly IAdapter _adapter;
@@ -19,6 +19,8 @@ public class BluetoothService : IBluetoothService
     private int _reconnectAttempts = 0;
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
     private bool _isReconnecting = false;
+    private bool _disposed = false;
+    private int _failedPingThreshold = 2; // Default threshold
 
     public event EventHandler<BleDevice>? DeviceDiscovered;
     public event EventHandler<ConnectionState>? ConnectionStatusChanged;
@@ -141,6 +143,14 @@ public class BluetoothService : IBluetoothService
         _pingTimer = null;
     }
 
+    /// <summary>
+    /// Sets the failed ping threshold for connection loss detection
+    /// </summary>
+    public void SetFailedPingThreshold(int threshold)
+    {
+        _failedPingThreshold = Math.Max(1, threshold); // Ensure at least 1
+    }
+
     private async Task PingDevice()
     {
         if (_connectedDevice == null)
@@ -183,7 +193,7 @@ public class BluetoothService : IBluetoothService
             _connectionState.FailedPingCount++;
 
             // Connection is likely lost - trigger appropriate handling
-            if (_connectionState.FailedPingCount >= 2) // Reduced threshold for faster detection
+            if (_connectionState.FailedPingCount >= _failedPingThreshold)
             {
                 await HandleConnectionLossAsync();
             }
@@ -362,5 +372,25 @@ public class BluetoothService : IBluetoothService
         _connectionState.Status = status;
         _connectionState.StatusMessage = message;
         ConnectionStatusChanged?.Invoke(this, _connectionState);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        // Unsubscribe from events
+        _adapter.DeviceAdvertised -= OnDeviceAdvertised;
+        _adapter.DeviceConnected -= OnDeviceConnected;
+        _adapter.DeviceDisconnected -= OnDeviceDisconnected;
+
+        // Cleanup resources
+        _pingTimer?.Dispose();
+        _scanCancellationToken?.Dispose();
+        _connectionLock?.Dispose();
+
+        System.Diagnostics.Debug.WriteLine("BluetoothService disposed");
     }
 }
