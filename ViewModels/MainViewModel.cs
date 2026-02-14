@@ -10,6 +10,8 @@ public partial class MainViewModel : ObservableObject
 {
     private readonly IBluetoothService _bluetoothService = null!;
     private readonly IAlarmService _alarmService = null!;
+    private readonly ILocationService? _locationService;
+    private readonly IBackgroundService? _backgroundService;
 
     [ObservableProperty]
     private ConnectionState _connectionState;
@@ -23,9 +25,19 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _statusMessage = "Not connected";
 
+    [ObservableProperty]
+    private int _currentRssi = 0;
+
+    [ObservableProperty]
+    private bool _isInSafeZone = false;
+
+    [ObservableProperty]
+    private bool _isMonitoringEnabled = false;
+
     public ObservableCollection<BleDevice> DiscoveredDevices { get; } = new();
 
-    public MainViewModel(IBluetoothService bluetoothService, IAlarmService alarmService)
+    public MainViewModel(IBluetoothService bluetoothService, IAlarmService alarmService, 
+        ILocationService? locationService = null, IBackgroundService? backgroundService = null)
     {
         try
         {
@@ -33,8 +45,18 @@ public partial class MainViewModel : ObservableObject
 
             _bluetoothService = bluetoothService;
             _alarmService = alarmService;
+            _locationService = locationService;
+            _backgroundService = backgroundService;
             _connectionState = new ConnectionState();
             _settings = new AlarmSettings();
+
+            // Add default safe zone (home) - user can configure later
+            _settings.SafeZones.Add(new SafeZone 
+            { 
+                Name = "Home",
+                RadiusMeters = 100,
+                IsEnabled = false // Disabled by default until user sets location
+            });
 
             // Subscribe to service events with error handling
             try
@@ -42,6 +64,7 @@ public partial class MainViewModel : ObservableObject
                 _bluetoothService.DeviceDiscovered += OnDeviceDiscovered;
                 _bluetoothService.ConnectionStatusChanged += OnConnectionStatusChanged;
                 _bluetoothService.ConnectionLost += OnConnectionLost;
+                _bluetoothService.RssiUpdated += OnRssiUpdated;
                 System.Diagnostics.Debug.WriteLine("MainViewModel event subscriptions completed");
             }
             catch (Exception ex)
@@ -278,8 +301,148 @@ public partial class MainViewModel : ObservableObject
     {
         Application.Current?.Dispatcher.Dispatch(async () =>
         {
-            StatusMessage = "Connection lost - triggering alarm";
-            await _alarmService.TriggerAlarmAsync(Settings);
+            // Check if we're in a safe zone before triggering alarm
+            if (await ShouldTriggerAlarmAsync())
+            {
+                StatusMessage = "Connection lost - triggering alarm";
+                await _alarmService.TriggerAlarmAsync(Settings);
+
+                // Attempt automatic reconnection if enabled
+                if (Settings.EnableAutoReconnect)
+                {
+                    StatusMessage = "Connection lost - attempting to reconnect...";
+                    _ = Task.Run(async () =>
+                    {
+                        var reconnected = await _bluetoothService.AttemptReconnectAsync(
+                            Settings.ReconnectMaxAttempts,
+                            Settings.ReconnectInitialDelaySeconds);
+
+                        if (reconnected)
+                        {
+                            await _alarmService.StopAlarmAsync();
+                            StatusMessage = "Reconnected successfully";
+                        }
+                        else
+                        {
+                            StatusMessage = "Reconnection failed - device out of range";
+                        }
+                    });
+                }
+            }
+            else
+            {
+                StatusMessage = "Connection lost but in safe zone - no alarm";
+                System.Diagnostics.Debug.WriteLine("Device disconnected but currently in safe zone");
+            }
         });
+    }
+
+    private void OnRssiUpdated(object? sender, int rssi)
+    {
+        Application.Current?.Dispatcher.Dispatch(() =>
+        {
+            CurrentRssi = rssi;
+            
+            // Check if signal is too weak (approaching disconnection)
+            if (rssi < Settings.RssiThreshold && ConnectionState.Status == ConnectionStatus.Connected)
+            {
+                StatusMessage = $"Weak signal: {rssi} dBm - device may be out of range";
+                System.Diagnostics.Debug.WriteLine($"RSSI below threshold: {rssi} < {Settings.RssiThreshold}");
+            }
+        });
+    }
+
+    /// <summary>
+    /// Determines if alarm should be triggered based on safe zones and settings
+    /// </summary>
+    private async Task<bool> ShouldTriggerAlarmAsync()
+    {
+        // If safe zones are disabled, always trigger alarm
+        if (!Settings.EnableSafeZones || _locationService == null)
+            return true;
+
+        try
+        {
+            // Check if currently in any safe zone
+            var inSafeZone = await _locationService.IsInAnySafeZoneAsync(Settings.SafeZones);
+            IsInSafeZone = inSafeZone;
+            
+            // Don't trigger alarm if in safe zone
+            return !inSafeZone;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error checking safe zones: {ex.Message}");
+            // On error, trigger alarm to be safe
+            return true;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ToggleMonitoringAsync()
+    {
+        try
+        {
+            if (_backgroundService == null)
+            {
+                StatusMessage = "Background monitoring not available on this platform";
+                return;
+            }
+
+            if (IsMonitoringEnabled)
+            {
+                await _backgroundService.StopMonitoringAsync();
+                IsMonitoringEnabled = false;
+                StatusMessage = "Background monitoring stopped";
+            }
+            else
+            {
+                // Request battery optimization exemption
+                await _backgroundService.RequestBatteryOptimizationExemptionAsync();
+                
+                await _backgroundService.StartMonitoringAsync();
+                IsMonitoringEnabled = true;
+                StatusMessage = "Background monitoring started";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to toggle monitoring: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"ToggleMonitoring error: {ex}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task SetCurrentLocationAsSafeZoneAsync()
+    {
+        try
+        {
+            if (_locationService == null)
+            {
+                StatusMessage = "Location service not available";
+                return;
+            }
+
+            var location = await _locationService.GetCurrentLocationAsync();
+            if (location.HasValue)
+            {
+                var homeZone = Settings.SafeZones.FirstOrDefault(z => z.Name == "Home");
+                if (homeZone != null)
+                {
+                    homeZone.Latitude = location.Value.Latitude;
+                    homeZone.Longitude = location.Value.Longitude;
+                    homeZone.IsEnabled = true;
+                    StatusMessage = $"Home location set: {location.Value.Latitude:F6}, {location.Value.Longitude:F6}";
+                }
+            }
+            else
+            {
+                StatusMessage = "Failed to get current location";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to set location: {ex.Message}";
+        }
     }
 }
