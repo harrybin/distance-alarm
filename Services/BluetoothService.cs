@@ -396,8 +396,13 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
 
             // Try to get the corresponding Plugin.BLE device from the adapter
             // The adapter maintains discovered devices internally
+            // Match by address - normalize both for comparison
+            var normalizedAddress = deviceAddress.Replace(":", "").Replace("-", "").ToUpperInvariant();
             var pluginDevice = _adapter.DiscoveredDevices.FirstOrDefault(d => 
-                d.Id.ToString().Equals(deviceAddress, StringComparison.OrdinalIgnoreCase));
+            {
+                var deviceId = d.Id.ToString().Replace(":", "").Replace("-", "").ToUpperInvariant();
+                return deviceId.Equals(normalizedAddress, StringComparison.OrdinalIgnoreCase);
+            });
 
             // If device is not yet in Plugin.BLE's discovered devices, trigger the standard scan
             // This will cause Plugin.BLE to discover it and we'll get it via OnDeviceAdvertised
@@ -409,7 +414,7 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
                     Id = deviceAddress,
                     Name = !string.IsNullOrWhiteSpace(deviceName) ? deviceName.Trim() : "Unknown",
                     MacAddress = deviceAddress,
-                    RssiValue = 0, // RSSI not directly available from BluetoothDevice, will be updated via Plugin.BLE
+                    RssiValue = -100, // Temporary value - will be updated by Plugin.BLE when it discovers the device
                     Device = null, // Will be set when Plugin.BLE discovers it
                     LastSeen = DateTime.Now
                 };

@@ -63,11 +63,11 @@ public class EnhancedBleScanner : IDisposable
             // Create scan settings optimized for WearOS discovery
             // SCAN_MODE_LOW_LATENCY provides the best discovery performance
             var settings = new ScanSettings.Builder()
-                ?.SetScanMode(global::Android.Bluetooth.LE.ScanMode.LowLatency) // High power mode for better discovery
-                ?.SetCallbackType(ScanCallbackType.AllMatches) // Report all advertisements
-                ?.SetMatchMode(BluetoothScanMatchMode.Aggressive) // Aggressive matching for better discovery
-                ?.SetReportDelay(0) // Report immediately
-                ?.Build();
+                .SetScanMode(global::Android.Bluetooth.LE.ScanMode.LowLatency) // High power mode for better discovery
+                .SetCallbackType(ScanCallbackType.AllMatches) // Report all advertisements
+                .SetMatchMode(BluetoothScanMatchMode.Aggressive) // Aggressive matching for better discovery
+                .SetReportDelay(0) // Report immediately
+                .Build();
 
             // No filters - discover all BLE devices including WearOS
             var filters = new List<ScanFilter>();
