@@ -4,6 +4,9 @@ using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Abstractions.EventArgs;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+#if ANDROID
+using DistanceAlarm.Platforms.Android;
+#endif
 
 namespace DistanceAlarm.Services;
 
@@ -21,6 +24,9 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
     private bool _isReconnecting = false;
     private bool _disposed = false;
     private int _failedPingThreshold = 2; // Default threshold
+#if ANDROID
+    private EnhancedBleScanner? _enhancedScanner; // Android-specific enhanced scanner for WearOS discovery
+#endif
 
     public event EventHandler<BleDevice>? DeviceDiscovered;
     public event EventHandler<ConnectionState>? ConnectionStatusChanged;
@@ -37,6 +43,21 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
         _adapter.DeviceAdvertised += OnDeviceAdvertised;
         _adapter.DeviceConnected += OnDeviceConnected;
         _adapter.DeviceDisconnected += OnDeviceDisconnected;
+
+#if ANDROID
+        // Initialize enhanced BLE scanner for better WearOS device discovery
+        try
+        {
+            _enhancedScanner = new EnhancedBleScanner();
+            _enhancedScanner.DeviceDiscovered += OnEnhancedScannerDeviceDiscovered;
+            System.Diagnostics.Debug.WriteLine("EnhancedBleScanner initialized for WearOS support");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"EnhancedBleScanner initialization failed: {ex.Message}");
+            _enhancedScanner = null;
+        }
+#endif
     }
 
     public async Task<bool> IsBluetoothEnabledAsync()
@@ -83,12 +104,45 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
             throw new InvalidOperationException("Bluetooth is not enabled");
         }
 
+#if ANDROID
+        // Use enhanced scanner on Android for better WearOS device discovery
+        if (_enhancedScanner != null)
+        {
+            try
+            {
+                _enhancedScanner.StartScan();
+                System.Diagnostics.Debug.WriteLine("Using EnhancedBleScanner for device discovery (optimized for WearOS)");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"EnhancedBleScanner failed to start, falling back to Plugin.BLE: {ex.Message}");
+                // Fallback to Plugin.BLE if enhanced scanner fails
+                _scanCancellationToken = new CancellationTokenSource();
+                await _adapter.StartScanningForDevicesAsync(cancellationToken: _scanCancellationToken.Token);
+            }
+        }
+        else
+        {
+            // Fallback to Plugin.BLE
+            _scanCancellationToken = new CancellationTokenSource();
+            await _adapter.StartScanningForDevicesAsync(cancellationToken: _scanCancellationToken.Token);
+        }
+#else
         _scanCancellationToken = new CancellationTokenSource();
         await _adapter.StartScanningForDevicesAsync(cancellationToken: _scanCancellationToken.Token);
+#endif
     }
 
     public async Task StopScanningAsync()
     {
+#if ANDROID
+        // Stop enhanced scanner on Android
+        if (_enhancedScanner != null && _enhancedScanner.IsScanning)
+        {
+            _enhancedScanner.StopScan();
+        }
+#endif
+        
         _scanCancellationToken?.Cancel();
         await _adapter.StopScanningForDevicesAsync();
     }
@@ -324,6 +378,62 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
         return pairedDevices;
     }
 
+#if ANDROID
+    /// <summary>
+    /// Handler for devices discovered by the enhanced Android BLE scanner
+    /// This provides better WearOS device discovery
+    /// </summary>
+    private void OnEnhancedScannerDeviceDiscovered(object? sender, global::Android.Bluetooth.BluetoothDevice androidDevice)
+    {
+        if (androidDevice == null)
+            return;
+
+        try
+        {
+            // Extract device information from Android BluetoothDevice
+            string deviceName = androidDevice.Name ?? "Unknown";
+            string deviceAddress = androidDevice.Address ?? "Unknown";
+
+            // Try to get the corresponding Plugin.BLE device from the adapter
+            // The adapter maintains discovered devices internally
+            // Match by address - normalize both for comparison
+            var normalizedAddress = deviceAddress.Replace(":", "").Replace("-", "").ToUpperInvariant();
+            var pluginDevice = _adapter.DiscoveredDevices.FirstOrDefault(d => 
+            {
+                var deviceId = d.Id.ToString().Replace(":", "").Replace("-", "").ToUpperInvariant();
+                return deviceId.Equals(normalizedAddress, StringComparison.OrdinalIgnoreCase);
+            });
+
+            // If device is not yet in Plugin.BLE's discovered devices, trigger the standard scan
+            // This will cause Plugin.BLE to discover it and we'll get it via OnDeviceAdvertised
+            if (pluginDevice == null)
+            {
+                // Create a minimal BLE device entry with the Android device info
+                var bleDevice = new BleDevice
+                {
+                    Id = deviceAddress,
+                    Name = !string.IsNullOrWhiteSpace(deviceName) ? deviceName.Trim() : "Unknown",
+                    MacAddress = deviceAddress,
+                    RssiValue = -100, // Temporary value - will be updated by Plugin.BLE when it discovers the device
+                    Device = null, // Will be set when Plugin.BLE discovers it
+                    LastSeen = DateTime.Now
+                };
+
+                // Log discovery for debugging
+                System.Diagnostics.Debug.WriteLine(
+                    $"EnhancedScanner: Device discovered - Name: {deviceName}, Address: {deviceAddress}");
+
+                // Notify listeners - this helps populate the UI immediately
+                DeviceDiscovered?.Invoke(this, bleDevice);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"OnEnhancedScannerDeviceDiscovered error: {ex.Message}");
+        }
+    }
+#endif
+
     private void OnDeviceAdvertised(object? sender, DeviceEventArgs e)
     {
         // Extract the best possible name from the device
@@ -385,6 +495,16 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
         _adapter.DeviceAdvertised -= OnDeviceAdvertised;
         _adapter.DeviceConnected -= OnDeviceConnected;
         _adapter.DeviceDisconnected -= OnDeviceDisconnected;
+
+#if ANDROID
+        // Cleanup enhanced scanner
+        if (_enhancedScanner != null)
+        {
+            _enhancedScanner.DeviceDiscovered -= OnEnhancedScannerDeviceDiscovered;
+            _enhancedScanner.Dispose();
+            _enhancedScanner = null;
+        }
+#endif
 
         // Cleanup resources
         _pingTimer?.Dispose();
