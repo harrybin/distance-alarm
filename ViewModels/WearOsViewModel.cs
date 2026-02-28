@@ -141,13 +141,23 @@ public partial class WearOsViewModel : ObservableObject
 
     private async void OnConnectionLost(object? sender, EventArgs e)
     {
-        Application.Current?.Dispatcher.Dispatch(async () =>
+        try
         {
-            StatusMessage = "Connection lost!";
-            IsAlarmActive = true;
-            var settings = LoadSettingsFromPreferences();
-            await _alarmService.TriggerAlarmAsync(settings);
-        });
+            if (Application.Current?.Dispatcher is { } dispatcher)
+            {
+                await dispatcher.DispatchAsync(async () =>
+                {
+                    StatusMessage = "Connection lost!";
+                    IsAlarmActive = true;
+                    var settings = LoadSettingsFromPreferences();
+                    await _alarmService.TriggerAlarmAsync(settings);
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"WearOsViewModel OnConnectionLost error: {ex.Message}");
+        }
     }
 
     private void OnRssiUpdated(object? sender, int rssi)
