@@ -31,13 +31,17 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IAlarmService, AlarmService>();
 #endif
 
-		// Register ViewModels
+#if WEAR_OS
+		// Wear OS: register the minimal watch UI only — no settings or scan pages
+		builder.Services.AddSingleton<WearOsViewModel>();
+		builder.Services.AddSingleton<WearOsMainPage>();
+#else
+		// Phone (companion app): register full UI with device management and settings
 		builder.Services.AddSingleton<MainViewModel>();
 		builder.Services.AddTransient<SettingsViewModel>();
-
-		// Register Pages
 		builder.Services.AddSingleton<MainPage>();
 		builder.Services.AddTransient<SettingsPage>();
+#endif
 
 #if DEBUG
 		builder.Logging.AddDebug();
