@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Watch-optimised main page for Wear OS.
+    This page is intentionally minimal: it shows connection status, a signal-
+    strength indicator and two buttons (stop alarm / test alarm).
+    All configuration is done via the companion phone app.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:DistanceAlarm.ViewModels"
+             x:Class="DistanceAlarm.Views.WearOsMainPage"
+             x:DataType="viewmodels:WearOsViewModel"
+             Title="Distance Alarm"
+             BackgroundColor="Black">
+
+    <!--
+        Layout: three rows stacked vertically.
+          Row 0 (*) — status area, vertically centred.
+          Row 1 (Auto) — alarm active indicator + stop button.
+          Row 2 (Auto) — test-alarm button.
+    -->
+    <Grid RowDefinitions="*,Auto,Auto" Padding="20,16">
+
+        <!-- ── Status area ── -->
+        <VerticalStackLayout Grid.Row="0" Spacing="6" VerticalOptions="Center">
+
+            <Label Text="{Binding StatusMessage}"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+
+            <!-- Device name — only shown while connected -->
+            <Label Text="{Binding ConnectedDeviceName}"
+                   FontSize="13"
+                   TextColor="LightGray"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding IsConnected}" />
+
+            <!-- RSSI — only shown while connected -->
+            <Label Text="{Binding CurrentRssi, StringFormat='{0} dBm'}"
+                   FontSize="11"
+                   TextColor="Gray"
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding IsConnected}" />
+
+        </VerticalStackLayout>
+
+        <!-- ── Alarm active banner + stop button ── -->
+        <VerticalStackLayout Grid.Row="1" Spacing="4" IsVisible="{Binding IsAlarmActive}">
+
+            <Border BackgroundColor="DarkRed" Padding="8,4">
+                <Label Text="⚠ ALARM ACTIVE"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       HorizontalOptions="Center" />
+            </Border>
+
+            <Button Text="STOP ALARM"
+                    Command="{Binding StopAlarmCommand}"
+                    BackgroundColor="DarkRed"
+                    TextColor="White"
+                    FontSize="14"
+                    FontAttributes="Bold"
+                    Margin="0,2" />
+
+        </VerticalStackLayout>
+
+        <!-- ── Test alarm button (hidden while alarm is active) ── -->
+        <Button Grid.Row="2"
+                Text="Test Alarm"
+                Command="{Binding TestAlarmCommand}"
+                IsVisible="{Binding IsAlarmActive, Converter={StaticResource InvertedBoolConverter}}"
+                BackgroundColor="#1A1A1A"
+                TextColor="Gray"
+                FontSize="11"
+                Margin="0,4" />
+
+    </Grid>
+
+</ContentPage>

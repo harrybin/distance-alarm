@@ -9,8 +9,13 @@ public partial class App : Microsoft.Maui.Controls.Application
 
 	protected override Microsoft.Maui.Controls.Window CreateWindow(Microsoft.Maui.IActivationState? activationState)
 	{
-		// Use AppShell with full TabBar navigation
+#if WEAR_OS
+		// Wear OS: minimal single-page shell — no TabBar, no NavBar
+		return new Microsoft.Maui.Controls.Window(new WearOsShell());
+#else
+		// Phone (companion app): full TabBar navigation with settings
 		return new Microsoft.Maui.Controls.Window(new AppShell());
+#endif
 	}
 
 	protected override void OnStart()

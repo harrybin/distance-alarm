@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    Minimal Shell for the Wear OS build.
+    A single page with no TabBar and no navigation bar — the small watch screen
+    has no room for tabs or a title bar.
+-->
+<Shell
+    x:Class="DistanceAlarm.WearOsShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:DistanceAlarm.Views"
+    Title="Distance Alarm"
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False">
+
+    <ShellContent
+        Title="Watch"
+        ContentTemplate="{DataTemplate views:WearOsMainPage}"
+        Route="WearOsMainPage" />
+
+</Shell>
