@@ -36,6 +36,9 @@ public partial class WearOsViewModel : ObservableObject
     /// <summary>Derived property: true when BLE connection is established.</summary>
     public bool IsConnected => ConnectionStatus == ConnectionStatus.Connected;
 
+    private bool _isInitialized = false;
+    private bool _isInitializing = false;
+
     public WearOsViewModel(IBluetoothService bluetoothService, IAlarmService alarmService,
         IBackgroundService? backgroundService = null)
     {
@@ -46,12 +49,19 @@ public partial class WearOsViewModel : ObservableObject
         _bluetoothService.ConnectionStatusChanged += OnConnectionStatusChanged;
         _bluetoothService.ConnectionLost += OnConnectionLost;
         _bluetoothService.RssiUpdated += OnRssiUpdated;
-
-        _ = Task.Run(InitializeAsync);
     }
 
-    private async Task InitializeAsync()
+    /// <summary>
+    /// Initializes BLE permissions and starts monitoring. Must be called from the page's
+    /// OnAppearing so that the Activity is in the resumed state when permissions are requested.
+    /// Safe to call multiple times; re-runs only if a previous attempt did not fully succeed.
+    /// </summary>
+    public async Task InitializeAsync()
     {
+        if (_isInitialized || _isInitializing)
+            return;
+
+        _isInitializing = true;
         try
         {
             if (!await _bluetoothService.IsBluetoothEnabledAsync())
@@ -91,11 +101,17 @@ public partial class WearOsViewModel : ObservableObject
                 await _bluetoothService.StartPingingAsync(pingInterval);
                 StatusMessage = $"Monitoring {ConnectedDeviceName}";
             }
+
+            _isInitialized = true;
         }
         catch (Exception ex)
         {
             StatusMessage = "Init error";
             System.Diagnostics.Debug.WriteLine($"WearOsViewModel InitializeAsync error: {ex.Message}");
+        }
+        finally
+        {
+            _isInitializing = false;
         }
     }
 
