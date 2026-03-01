@@ -69,24 +69,28 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
     {
         try
         {
-            // Request location permissions (required for BLE scanning on Android)
-            var locationStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+#if ANDROID
+            // Android 12+ (API 31+) requires BLUETOOTH_SCAN and BLUETOOTH_CONNECT at runtime.
+            // Location permission is not required for BLE on Android 12+ when using these permissions.
+            if (global::Android.OS.Build.VERSION.SdkInt >= global::Android.OS.BuildVersionCodes.S)
+            {
+                var btStatus = await Permissions.RequestAsync<Platforms.Android.BluetoothPermissions>();
+                if (btStatus != PermissionStatus.Granted)
+                {
+                    System.Diagnostics.Debug.WriteLine("Bluetooth permissions denied on Android 12+");
+                    return false;
+                }
+                return true;
+            }
+#endif
 
+            // Android < 12: location permission is required for BLE scanning
+            var locationStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
             if (locationStatus != PermissionStatus.Granted)
             {
                 System.Diagnostics.Debug.WriteLine("Location permission denied - BLE scanning may not work");
                 return false;
             }
-
-            // On Android 12+, we also need Bluetooth permissions
-#if ANDROID
-            if (DeviceInfo.Version.Major >= 12)
-            {
-                // For newer Android versions, check Bluetooth permissions through MAUI Essentials
-                // Note: MAUI Essentials handles the platform-specific permission requests
-                System.Diagnostics.Debug.WriteLine("Android 12+ detected - Bluetooth permissions handled by system");
-            }
-#endif
 
             return true;
         }

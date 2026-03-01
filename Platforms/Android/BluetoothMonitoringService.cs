@@ -11,7 +11,7 @@ namespace DistanceAlarm.Platforms.Android;
 /// This ensures the app continues to monitor the connection even when the user
 /// locks the screen or switches to another app
 /// </summary>
-[Service(ForegroundServiceType = global::Android.Content.PM.ForegroundService.TypeLocation)]
+[Service(ForegroundServiceType = global::Android.Content.PM.ForegroundService.TypeConnectedDevice)]
 public class BluetoothMonitoringService : Service
 {
     private const int NotificationId = 9001;
@@ -37,7 +37,15 @@ public class BluetoothMonitoringService : Service
 
         // Create foreground notification
         var notification = CreateNotification();
-        StartForeground(NotificationId, notification);
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+        {
+            StartForeground(NotificationId, notification,
+                global::Android.Content.PM.ForegroundService.TypeConnectedDevice);
+        }
+        else
+        {
+            StartForeground(NotificationId, notification);
+        }
 
         // Acquire wake lock to keep CPU running for BLE monitoring
         AcquireWakeLock();
