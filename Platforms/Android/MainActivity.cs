@@ -52,4 +52,11 @@ public class MainActivity : MauiAppCompatActivity
             System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
         }
     }
+
+    public override void OnRequestPermissionsResult(int requestCode, string[] permissions,
+        Permission[] grantResults)
+    {
+        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        Platforms.Android.AndroidPermissionService.PermissionRequestCallback.OnResult(requestCode, grantResults);
+    }
 }

@@ -2,7 +2,6 @@ using Android;
 using AndroidX.Core.App;
 using AndroidX.Core.Content;
 using DistanceAlarm.Services;
-using Microsoft.Maui.Authentication;
 
 namespace DistanceAlarm.Platforms.Android;
 
@@ -120,14 +119,11 @@ public class AndroidPermissionService : IPermissionService
                 return true; // All permissions already granted
             }
 
+            // Request permissions and register a callback. Results are dispatched back via
+            // MainActivity.OnRequestPermissionsResult → PermissionRequestCallback.OnResult.
             var tcs = new TaskCompletionSource<bool>();
-            var requestCode = new Random().Next(1000, 9999);
-
-            // Create a permission callback
-            var callback = new PermissionCallback(tcs);
-
-            // Request permissions
-            ActivityCompat.RequestPermissions(activity, permissionsToRequest, requestCode);
+            var requestCode = PermissionRequestCallback.NextRequestCode();
+            PermissionRequestCallback.Register(requestCode, tcs, permissionsToRequest, activity);
 
             // Wait for the result (timeout after 30 seconds)
             using var cancellationToken = new CancellationTokenSource(TimeSpan.FromSeconds(30));
@@ -155,18 +151,40 @@ public class AndroidPermissionService : IPermissionService
             ContextCompat.CheckSelfPermission(activity, p) == global::Android.Content.PM.Permission.Granted);
     }
 
-    private class PermissionCallback
+    /// <summary>
+    /// Manages pending permission request callbacks keyed by request code.
+    /// MainActivity.OnRequestPermissionsResult dispatches results here.
+    /// </summary>
+    internal static class PermissionRequestCallback
     {
-        private readonly TaskCompletionSource<bool> _tcs;
+        private static int _nextRequestCode = 1000;
+        private static readonly Dictionary<int, TaskCompletionSource<bool>> _pending = new();
 
-        public PermissionCallback(TaskCompletionSource<bool> tcs)
+        internal static void Register(int requestCode, TaskCompletionSource<bool> tcs,
+            string[] permissions, global::Android.App.Activity activity)
         {
-            _tcs = tcs;
+            lock (_pending)
+            {
+                _pending[requestCode] = tcs;
+            }
+            ActivityCompat.RequestPermissions(activity, permissions, requestCode);
         }
 
-        public void OnPermissionsResult(bool allGranted)
+        internal static int NextRequestCode() =>
+            Interlocked.Increment(ref _nextRequestCode);
+
+        internal static void OnResult(int requestCode, global::Android.Content.PM.Permission[] grantResults)
         {
-            _tcs.TrySetResult(allGranted);
+            TaskCompletionSource<bool>? tcs;
+            lock (_pending)
+            {
+                if (!_pending.TryGetValue(requestCode, out tcs))
+                    return;
+                _pending.Remove(requestCode);
+            }
+            var allGranted = grantResults.Length > 0 &&
+                             grantResults.All(r => r == global::Android.Content.PM.Permission.Granted);
+            tcs.TrySetResult(allGranted);
         }
     }
 }
