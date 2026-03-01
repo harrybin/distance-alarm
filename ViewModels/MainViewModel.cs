@@ -280,7 +280,8 @@ public partial class MainViewModel : ObservableObject
         // Update on UI thread
         Application.Current?.Dispatcher.Dispatch(() =>
         {
-            var existingDevice = DiscoveredDevices.FirstOrDefault(d => d.Id == device.Id);
+            var existingDevice = DiscoveredDevices.FirstOrDefault(d =>
+                string.Equals(d.Id, device.Id, StringComparison.OrdinalIgnoreCase));
             if (existingDevice != null)
             {
                 // Update existing device with all properties that may have changed
