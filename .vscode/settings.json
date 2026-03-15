@@ -22,5 +22,20 @@
         "ANDROID_HOME": "${env:ANDROID_HOME}",
         "ANDROID_NDK_HOME": "${env:ANDROID_NDK_HOME}",
         "JAVA_HOME": "${env:JAVA_HOME}"
-    }
+    },
+    "github.copilot.chat.codeGeneration.instructions": [
+        {
+            "text": "This is a .NET MAUI 9 project targeting Android phones and Wear OS (OnePlus Watch 3). Use CommunityToolkit.Mvvm 8.4.0 with [ObservableProperty] and [RelayCommand] source generators. Guard WearOS code with #if WEAR_OS and Android code with #if ANDROID. Use Plugin.BLE 3.2.0 for Bluetooth. All async methods must accept CancellationToken."
+        }
+    ],
+    "github.copilot.chat.testGeneration.instructions": [
+        {
+            "text": "There are currently no unit tests in this project. If adding tests, create a new project DistanceAlarm.Tests/ with xUnit. Mock IBluetoothService, IAlarmService, ILocationService, and IPermissionService using NSubstitute or Moq. Test ViewModels by exercising commands and asserting observable property changes."
+        }
+    ],
+    "github.copilot.chat.reviewSelection.instructions": [
+        {
+            "text": "When reviewing code in this .NET MAUI project: check for missing #if WEAR_OS / #if ANDROID guards, missing CancellationToken parameters, ObservableProperty/RelayCommand usage, Android API-level guards (Build.VERSION.SdkInt), correct BLE permission handling (BluetoothPermissions on API 31+), and MainThread.BeginInvokeOnMainThread for UI updates from service events."
+        }
+    ]
 }
