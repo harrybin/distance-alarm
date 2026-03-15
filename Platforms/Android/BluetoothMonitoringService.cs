@@ -104,7 +104,7 @@ public class BluetoothMonitoringService : Service
                     WakeLockFlags.Partial,
                     "DistanceAlarm::BluetoothMonitoringWakeLock");
                 
-                _wakeLock?.Acquire();
+                _wakeLock?.Acquire((long)TimeSpan.FromHours(12).TotalMilliseconds); // Auto-release after 12 h if service doesn't stop cleanly
                 System.Diagnostics.Debug.WriteLine("Wake lock acquired");
             }
         }

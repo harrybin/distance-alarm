@@ -128,7 +128,7 @@ public partial class MainViewModel : ObservableObject
             await _bluetoothService.StartScanningAsync();
 
             // Auto-stop scanning after 30 seconds
-            _ = Task.Delay(30000).ContinueWith(async _ => await StopScanAsync());
+            _ = Task.Delay(30000).ContinueWith(_ => StopScanAsync()).Unwrap();
         }
         catch (Exception ex)
         {
@@ -309,42 +309,52 @@ public partial class MainViewModel : ObservableObject
 
     private async void OnConnectionLost(object? sender, EventArgs e)
     {
-        Application.Current?.Dispatcher.Dispatch(async () =>
+        try
         {
-            // Check if we're in a safe zone before triggering alarm
-            if (await ShouldTriggerAlarmAsync())
-            {
-                StatusMessage = "Connection lost - triggering alarm";
-                await _alarmService.TriggerAlarmAsync(Settings);
+            if (Application.Current?.Dispatcher is not { } dispatcher)
+                return;
 
-                // Attempt automatic reconnection if enabled
-                if (Settings.EnableAutoReconnect)
+            await dispatcher.DispatchAsync(async () =>
+            {
+                // Check if we're in a safe zone before triggering alarm
+                if (await ShouldTriggerAlarmAsync())
                 {
-                    StatusMessage = "Connection lost - attempting to reconnect...";
-                    _ = Task.Run(async () =>
-                    {
-                        var reconnected = await _bluetoothService.AttemptReconnectAsync(
-                            Settings.ReconnectMaxAttempts,
-                            Settings.ReconnectInitialDelaySeconds);
+                    StatusMessage = "Connection lost - triggering alarm";
+                    await _alarmService.TriggerAlarmAsync(Settings);
 
-                        if (reconnected)
+                    // Attempt automatic reconnection if enabled
+                    if (Settings.EnableAutoReconnect)
+                    {
+                        StatusMessage = "Connection lost - attempting to reconnect...";
+                        _ = Task.Run(async () =>
                         {
-                            await _alarmService.StopAlarmAsync();
-                            StatusMessage = "Reconnected successfully";
-                        }
-                        else
-                        {
-                            StatusMessage = "Reconnection failed - device out of range";
-                        }
-                    });
+                            var reconnected = await _bluetoothService.AttemptReconnectAsync(
+                                Settings.ReconnectMaxAttempts,
+                                Settings.ReconnectInitialDelaySeconds);
+
+                            if (reconnected)
+                            {
+                                await _alarmService.StopAlarmAsync();
+                                StatusMessage = "Reconnected successfully";
+                            }
+                            else
+                            {
+                                StatusMessage = "Reconnection failed - device out of range";
+                            }
+                        });
+                    }
                 }
-            }
-            else
-            {
-                StatusMessage = "Connection lost but in safe zone - no alarm";
-                System.Diagnostics.Debug.WriteLine("Device disconnected but currently in safe zone");
-            }
-        });
+                else
+                {
+                    StatusMessage = "Connection lost but in safe zone - no alarm";
+                    System.Diagnostics.Debug.WriteLine("Device disconnected but currently in safe zone");
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"OnConnectionLost error: {ex.Message}");
+        }
     }
 
     private void OnRssiUpdated(object? sender, int rssi)
