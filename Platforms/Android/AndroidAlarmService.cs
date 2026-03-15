@@ -220,8 +220,6 @@ public class AndroidAlarmService : IAlarmService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Notification error: {ex.Message}");
-            // Fallback to simple alert
-            await Application.Current?.MainPage?.DisplayAlert(title, message, "OK")!;
         }
     }
 }
