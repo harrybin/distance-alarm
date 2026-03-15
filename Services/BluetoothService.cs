@@ -109,31 +109,47 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
         }
 
 #if ANDROID
-        // Use enhanced scanner on Android for better WearOS device discovery
+        // Start Plugin.BLE scan to obtain IDevice objects required for ConnectToDeviceAsync
+        _scanCancellationToken = new CancellationTokenSource();
+        var pluginBleScanTask = _adapter.StartScanningForDevicesAsync(cancellationToken: _scanCancellationToken.Token);
+
+        // Also run the enhanced scanner for better WearOS device discovery
         if (_enhancedScanner != null)
         {
             try
             {
                 _enhancedScanner.StartScan();
-                System.Diagnostics.Debug.WriteLine("Using EnhancedBleScanner for device discovery (optimized for WearOS)");
+                System.Diagnostics.Debug.WriteLine("Using EnhancedBleScanner alongside Plugin.BLE for WearOS device discovery");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"EnhancedBleScanner failed to start, falling back to Plugin.BLE: {ex.Message}");
-                // Fallback to Plugin.BLE if enhanced scanner fails
-                _scanCancellationToken = new CancellationTokenSource();
-                await _adapter.StartScanningForDevicesAsync(cancellationToken: _scanCancellationToken.Token);
+                System.Diagnostics.Debug.WriteLine($"EnhancedBleScanner failed to start: {ex.Message}");
             }
         }
-        else
+
+        try
         {
-            // Fallback to Plugin.BLE
-            _scanCancellationToken = new CancellationTokenSource();
-            await _adapter.StartScanningForDevicesAsync(cancellationToken: _scanCancellationToken.Token);
+            await pluginBleScanTask;
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal scan stop via cancellation token — not an error
+            System.Diagnostics.Debug.WriteLine("Plugin.BLE scan stopped (cancellation)");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Plugin.BLE scan error: {ex.Message}");
         }
 #else
         _scanCancellationToken = new CancellationTokenSource();
-        await _adapter.StartScanningForDevicesAsync(cancellationToken: _scanCancellationToken.Token);
+        try
+        {
+            await _adapter.StartScanningForDevicesAsync(cancellationToken: _scanCancellationToken.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal scan stop via cancellation token — not an error
+        }
 #endif
     }
 

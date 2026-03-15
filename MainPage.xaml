@@ -46,19 +46,29 @@
                            FontSize="18" 
                            TextColor="White" />
                     
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" 
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" 
                           ColumnSpacing="12" RowSpacing="12">
                         
                         <Button Grid.Row="0" Grid.Column="0"
+                                Text="Scan for Devices"
+                                Command="{Binding StartScanCommand}"
+                                IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}" />
+
+                        <Button Grid.Row="0" Grid.Column="1"
+                                Text="Stop Scan"
+                                Command="{Binding StopScanCommand}"
+                                IsEnabled="{Binding IsScanning}" />
+
+                        <Button Grid.Row="1" Grid.Column="0"
                                 Text="Refresh Connected" 
                                 Command="{Binding LoadConnectedDevicesCommand}" />
                         
-                        <Button Grid.Row="0" Grid.Column="1"
+                        <Button Grid.Row="1" Grid.Column="1"
                                 Text="Disconnect" 
                                 Command="{Binding DisconnectCommand}"
                                 IsEnabled="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNotNullConverter}}" />
                         
-                        <Button Grid.Row="1" Grid.Column="0"
+                        <Button Grid.Row="2" Grid.Column="0"
                                 Text="Test Alarm" 
                                 Command="{Binding TestAlarmCommand}" />
                     </Grid>
@@ -71,7 +81,7 @@
                     StrokeThickness="1"
                     Padding="16">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="Connected Devices" 
+                    <Label Text="Available Devices" 
                            FontSize="18" 
                            TextColor="White" />
                     
