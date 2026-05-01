@@ -182,12 +182,160 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
             UpdateConnectionStatus(ConnectionStatus.Connected, $"Connected to {device.DisplayName}");
             _connectionState.ConnectedDevice = device;
 
+            // Persist the device ID so the phone can auto-reconnect on next startup
+            Preferences.Default.Set(AppConstants.SavedDeviceIdKey,   device.Device.Id.ToString());
+            Preferences.Default.Set(AppConstants.SavedDeviceNameKey, device.DisplayName);
+
+            System.Diagnostics.Debug.WriteLine(
+                $"BluetoothService: Saved paired device – {device.DisplayName} ({device.Device.Id})");
+
             return true;
         }
         catch (Exception ex)
         {
             UpdateConnectionStatus(ConnectionStatus.Failed, $"Connection failed: {ex.Message}");
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Connects directly to the previously-paired watch using the device ID that was
+    /// persisted to <see cref="Preferences"/> after the first manual pairing.
+    /// </summary>
+    public async Task<bool> ConnectToSavedDeviceAsync()
+    {
+        var savedId = Preferences.Default.Get(AppConstants.SavedDeviceIdKey, string.Empty);
+        if (string.IsNullOrEmpty(savedId))
+        {
+            System.Diagnostics.Debug.WriteLine(
+                "BluetoothService.ConnectToSavedDeviceAsync: no saved device ID");
+            return false;
+        }
+
+        if (!Guid.TryParse(savedId, out var deviceGuid))
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"BluetoothService.ConnectToSavedDeviceAsync: saved ID '{savedId}' is not a valid GUID");
+            return false;
+        }
+
+        try
+        {
+            var savedName = Preferences.Default.Get(AppConstants.SavedDeviceNameKey, "Watch");
+            UpdateConnectionStatus(ConnectionStatus.Connecting,
+                $"Connecting to {savedName}...");
+
+            var rawDevice = await _adapter.ConnectToKnownDeviceAsync(
+                deviceGuid,
+                new Plugin.BLE.Abstractions.ConnectParameters(false, false));
+
+            if (rawDevice == null)
+            {
+                UpdateConnectionStatus(ConnectionStatus.Disconnected, "Auto-connect failed");
+                return false;
+            }
+
+            _connectedDevice = rawDevice;
+
+            var bleDevice = new BleDevice
+            {
+                Id         = rawDevice.Id.ToString(),
+                Name       = !string.IsNullOrWhiteSpace(rawDevice.Name) ? rawDevice.Name : savedName,
+                MacAddress = rawDevice.Id.ToString(),
+                RssiValue  = rawDevice.Rssi,
+                Device     = rawDevice,
+                LastSeen   = DateTime.Now,
+                IsConnected = true
+            };
+
+            _connectionState.ConnectedDevice = bleDevice;
+            UpdateConnectionStatus(ConnectionStatus.Connected,
+                $"Connected to {bleDevice.DisplayName}");
+
+            System.Diagnostics.Debug.WriteLine(
+                $"BluetoothService: Auto-connected to saved device – {bleDevice.DisplayName}");
+
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            UpdateConnectionStatus(ConnectionStatus.Disconnected, "Auto-connect cancelled");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UpdateConnectionStatus(ConnectionStatus.Disconnected,
+                $"Auto-connect failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine(
+                $"BluetoothService.ConnectToSavedDeviceAsync error: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Pushes the current alarm settings to the connected watch by writing to the
+    /// Settings GATT characteristic.  No-op if the watch GATT service is not found.
+    /// Retries service discovery up to 5 times with incremental back-off instead of
+    /// a fixed sleep, to avoid relying on an arbitrary delay after connection.
+    /// </summary>
+    public async Task PushSettingsToDeviceAsync(AlarmSettings settings)
+    {
+        if (_connectedDevice == null)
+            return;
+
+        try
+        {
+            // Poll for the service with exponential back-off: Plugin.BLE triggers GATT
+            // service discovery when GetServiceAsync is called; the first call may return
+            // null if discovery has not completed yet.
+            Plugin.BLE.Abstractions.Contracts.IService? service = null;
+            for (int attempt = 0; attempt < 5 && service == null; attempt++)
+            {
+                if (attempt > 0)
+                    await Task.Delay(500 * attempt);
+
+                service = await _connectedDevice.GetServiceAsync(
+                    Guid.Parse(AppConstants.WatchServiceUuid));
+            }
+
+            if (service == null)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "BluetoothService.PushSettingsToDeviceAsync: watch service not found after retries");
+                return;
+            }
+
+            var characteristic = await service.GetCharacteristicAsync(
+                Guid.Parse(AppConstants.SettingsCharacteristicUuid));
+
+            if (characteristic == null)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "BluetoothService.PushSettingsToDeviceAsync: settings characteristic not found");
+                return;
+            }
+
+            // Serialize settings as UTF-8 JSON
+            var json = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                pingInterval        = settings.PingInterval,
+                vibrationEnabled    = settings.VibrationEnabled,
+                vibrationDuration   = settings.VibrationDuration,
+                soundEnabled        = settings.SoundEnabled,
+                rssiThreshold       = settings.RssiThreshold,
+                failedPingThreshold = settings.FailedPingThreshold
+            });
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            await characteristic.WriteAsync(bytes);
+
+            System.Diagnostics.Debug.WriteLine(
+                $"BluetoothService: Settings pushed to watch – {json}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"BluetoothService.PushSettingsToDeviceAsync error: {ex.Message}");
         }
     }
 

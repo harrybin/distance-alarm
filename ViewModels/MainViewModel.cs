@@ -77,17 +77,27 @@ public partial class MainViewModel : ObservableObject
 
             System.Diagnostics.Debug.WriteLine("MainViewModel constructor completed successfully");
             
-            // Load connected devices automatically on startup
+            // Auto-connect to previously paired watch, then fall back to showing existing connections
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await Task.Delay(1000); // Small delay to allow services to initialize
-                    await LoadConnectedDevicesAsync();
+                    await Task.Delay(1500); // Allow services to initialise
+                    var autoConnected = await _bluetoothService.ConnectToSavedDeviceAsync();
+                    if (autoConnected)
+                    {
+                        // Push current settings to the watch immediately after connecting
+                        await _bluetoothService.PushSettingsToDeviceAsync(Settings);
+                        await _bluetoothService.StartPingingAsync(Settings.PingInterval);
+                    }
+                    else
+                    {
+                        await LoadConnectedDevicesAsync();
+                    }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Auto-load connected devices failed: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Auto-connect on startup failed: {ex.Message}");
                 }
             });
         }
@@ -174,6 +184,9 @@ public partial class MainViewModel : ObservableObject
                 {
                     configService.SetFailedPingThreshold(Settings.FailedPingThreshold);
                 }
+
+                // Push current settings to the watch over GATT
+                await _bluetoothService.PushSettingsToDeviceAsync(Settings);
                 
                 await _bluetoothService.StartPingingAsync(Settings.PingInterval);
             }
