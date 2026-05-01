@@ -33,6 +33,14 @@
                            TextColor="LightGray"
                            HorizontalOptions="Center"
                            IsVisible="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNotNullConverter}}" />
+
+                    <!-- Pairing hint when no device is connected -->
+                    <Label Text="Open the Distance Alarm app on your watch, then tap 'Scan for Devices' below."
+                           FontSize="13"
+                           TextColor="Gray"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           IsVisible="{Binding ConnectionState.ConnectedDevice, Converter={StaticResource IsNullConverter}}" />
                 </VerticalStackLayout>
             </Border>
 
@@ -46,7 +54,7 @@
                            FontSize="18" 
                            TextColor="White" />
                     
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" 
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" 
                           ColumnSpacing="12" RowSpacing="12">
                         
                         <Button Grid.Row="0" Grid.Column="0"
@@ -71,6 +79,15 @@
                         <Button Grid.Row="2" Grid.Column="0"
                                 Text="Test Alarm" 
                                 Command="{Binding TestAlarmCommand}" />
+
+                        <Button Grid.Row="2" Grid.Column="1"
+                                Text="{Binding IsMonitoringEnabled, Converter={StaticResource BoolToMonitoringTextConverter}}"
+                                Command="{Binding ToggleMonitoringCommand}" />
+
+                        <!-- Set home safe-zone spanning both columns -->
+                        <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                                Text="Set Current Location as Safe Zone (Home)"
+                                Command="{Binding SetCurrentLocationAsSafeZoneCommand}" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>

@@ -7,13 +7,16 @@ namespace DistanceAlarm.ViewModels;
 
 /// <summary>
 /// Minimal ViewModel for the Wear OS watch app.
-/// The watch only monitors BLE connection status and triggers a vibration alarm
-/// when the connection is lost. All configuration is managed via the companion
-/// phone app and stored in shared Preferences.
+///
+/// The watch acts as a BLE Peripheral / GATT Server (via <see cref="IWearOsPeripheralService"/>).
+/// The companion phone app is the BLE Central that discovers and connects to the watch.
+/// When the phone disconnects, the watch triggers a vibration alarm.
+/// All configuration is pushed from the phone app via the Settings GATT characteristic
+/// and stored in local Preferences by <see cref="IWearOsPeripheralService"/>.
 /// </summary>
 public partial class WearOsViewModel : ObservableObject
 {
-    private readonly IBluetoothService _bluetoothService;
+    private readonly IWearOsPeripheralService _peripheralService;
     private readonly IAlarmService _alarmService;
     private readonly IBackgroundService? _backgroundService;
 
@@ -33,28 +36,29 @@ public partial class WearOsViewModel : ObservableObject
     [ObservableProperty]
     private string _connectedDeviceName = string.Empty;
 
-    /// <summary>Derived property: true when BLE connection is established.</summary>
+    /// <summary>Derived property: true when the companion phone has an active BLE connection.</summary>
     public bool IsConnected => ConnectionStatus == ConnectionStatus.Connected;
 
-    private bool _isInitialized = false;
+    private bool _isInitialized  = false;
     private bool _isInitializing = false;
 
-    public WearOsViewModel(IBluetoothService bluetoothService, IAlarmService alarmService,
+    public WearOsViewModel(IWearOsPeripheralService peripheralService,
+        IAlarmService alarmService,
         IBackgroundService? backgroundService = null)
     {
-        _bluetoothService = bluetoothService;
-        _alarmService = alarmService;
-        _backgroundService = backgroundService;
+        _peripheralService  = peripheralService;
+        _alarmService       = alarmService;
+        _backgroundService  = backgroundService;
 
-        _bluetoothService.ConnectionStatusChanged += OnConnectionStatusChanged;
-        _bluetoothService.ConnectionLost += OnConnectionLost;
-        _bluetoothService.RssiUpdated += OnRssiUpdated;
+        _peripheralService.PhoneConnected    += OnPhoneConnected;
+        _peripheralService.PhoneDisconnected += OnPhoneDisconnected;
     }
 
     /// <summary>
-    /// Initializes BLE permissions and starts monitoring. Must be called from the page's
-    /// OnAppearing so that the Activity is in the resumed state when permissions are requested.
-    /// Safe to call multiple times; re-runs only if a previous attempt did not fully succeed.
+    /// Starts BLE advertising and the GATT server so the phone can discover and connect to
+    /// the watch.  Must be called from <c>WearOsMainPage.OnAppearing</c> so that the Activity
+    /// is resumed before requesting BLE permissions.
+    /// Safe to call multiple times; re-runs only when a previous attempt did not complete.
     /// </summary>
     public async Task InitializeAsync()
     {
@@ -64,19 +68,7 @@ public partial class WearOsViewModel : ObservableObject
         _isInitializing = true;
         try
         {
-            if (!await _bluetoothService.IsBluetoothEnabledAsync())
-            {
-                StatusMessage = "Bluetooth off";
-                return;
-            }
-
-            if (!await _bluetoothService.RequestBluetoothPermissionsAsync())
-            {
-                StatusMessage = "BT permission denied";
-                return;
-            }
-
-            // Auto-start background monitoring so the watch keeps working with screen off
+            // Auto-start background monitoring so the watch keeps running with the screen off
             if (_backgroundService != null)
             {
                 try
@@ -86,28 +78,23 @@ public partial class WearOsViewModel : ObservableObject
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"WearOS: background monitoring failed: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine(
+                        $"WearOS: background monitoring failed: {ex.Message}");
                 }
             }
 
-            StatusMessage = "Waiting for connection";
+            // Start the BLE peripheral service (advertising + GATT server).
+            // The phone will discover and connect to the watch automatically.
+            await _peripheralService.StartAsync();
 
-            // Resume pinging any already-connected device
-            var connected = await _bluetoothService.GetPairedDevicesAsync();
-            if (connected.Any())
-            {
-                ConnectedDeviceName = connected.First().DisplayName;
-                var pingInterval = Preferences.Get("PingInterval", 10);
-                await _bluetoothService.StartPingingAsync(pingInterval);
-                StatusMessage = $"Monitoring {ConnectedDeviceName}";
-            }
-
+            StatusMessage = "Waiting for phone…";
             _isInitialized = true;
         }
         catch (Exception ex)
         {
             StatusMessage = "Init error";
-            System.Diagnostics.Debug.WriteLine($"WearOsViewModel InitializeAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine(
+                $"WearOsViewModel InitializeAsync error: {ex.Message}");
         }
         finally
         {
@@ -122,7 +109,9 @@ public partial class WearOsViewModel : ObservableObject
         {
             await _alarmService.StopAlarmAsync();
             IsAlarmActive = false;
-            StatusMessage = IsConnected ? $"Monitoring {ConnectedDeviceName}" : "Waiting for connection";
+            StatusMessage = IsConnected
+                ? $"Monitoring {ConnectedDeviceName}"
+                : "Waiting for phone…";
         }
         catch (Exception ex)
         {
@@ -145,60 +134,60 @@ public partial class WearOsViewModel : ObservableObject
         }
     }
 
-    private void OnConnectionStatusChanged(object? sender, ConnectionState state)
+    // ── Peripheral service event handlers ────────────────────────────────────
+
+    private void OnPhoneConnected(object? sender, string phoneName)
     {
         Application.Current?.Dispatcher.Dispatch(() =>
         {
-            ConnectionStatus = state.Status;
-            StatusMessage = state.StatusMessage;
-            ConnectedDeviceName = state.ConnectedDevice?.DisplayName ?? string.Empty;
+            ConnectionStatus    = ConnectionStatus.Connected;
+            ConnectedDeviceName = phoneName;
+            StatusMessage       = $"Monitoring · {phoneName}";
+            IsAlarmActive       = false;
         });
     }
 
-    private async void OnConnectionLost(object? sender, EventArgs e)
+    private async void OnPhoneDisconnected(object? sender, EventArgs e)
     {
         try
         {
-            if (Application.Current?.Dispatcher is { } dispatcher)
+            if (Application.Current?.Dispatcher is not { } dispatcher)
+                return;
+
+            await dispatcher.DispatchAsync(async () =>
             {
-                await dispatcher.DispatchAsync(async () =>
-                {
-                    StatusMessage = "Connection lost!";
-                    IsAlarmActive = true;
-                    var settings = LoadSettingsFromPreferences();
-                    await _alarmService.TriggerAlarmAsync(settings);
-                });
-            }
+                ConnectionStatus    = ConnectionStatus.Disconnected;
+                ConnectedDeviceName = string.Empty;
+                StatusMessage       = "Connection lost!";
+                IsAlarmActive       = true;
+
+                // Alarm: vibration (primary) → sound (secondary) → notification
+                var settings = LoadSettingsFromPreferences();
+                await _alarmService.TriggerAlarmAsync(settings);
+            });
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"WearOsViewModel OnConnectionLost error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine(
+                $"WearOsViewModel OnPhoneDisconnected error: {ex.Message}");
         }
     }
 
-    private void OnRssiUpdated(object? sender, int rssi)
-    {
-        Application.Current?.Dispatcher.Dispatch(() =>
-        {
-            CurrentRssi = rssi;
-        });
-    }
+    // ── Helpers ──────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Loads alarm settings from device Preferences.
-    /// On Wear OS the companion phone app writes these values;
-    /// sensible defaults are used if not yet configured.
+    /// On Wear OS the companion phone app writes these values via the Settings GATT
+    /// characteristic; sensible defaults are used when not yet configured.
     /// </summary>
-    private static AlarmSettings LoadSettingsFromPreferences()
+    private static AlarmSettings LoadSettingsFromPreferences() => new AlarmSettings
     {
-        return new AlarmSettings
-        {
-            PingInterval = Preferences.Get("PingInterval", 10),
-            VibrationEnabled = Preferences.Get("VibrationEnabled", true),
-            VibrationDuration = Preferences.Get("VibrationDuration", 1000),
-            // Sound disabled on watch by default (watch speakers are limited)
-            SoundEnabled = Preferences.Get("SoundEnabled", false),
-            NotificationEnabled = Preferences.Get("NotificationEnabled", true),
-        };
-    }
+        PingInterval      = Preferences.Default.Get("PingInterval",      10),
+        VibrationEnabled  = Preferences.Default.Get("VibrationEnabled",  true),
+        VibrationDuration = Preferences.Default.Get("VibrationDuration", 1000),
+        // Sound disabled on watch by default (watch speakers are limited)
+        SoundEnabled         = Preferences.Default.Get("SoundEnabled",      false),
+        NotificationEnabled  = Preferences.Default.Get("NotificationEnabled", true),
+    };
 }
+

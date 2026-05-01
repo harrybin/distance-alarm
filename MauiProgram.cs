@@ -19,7 +19,6 @@ public static class MauiProgram
 			});
 
 		// Register Services
-		builder.Services.AddSingleton<IBluetoothService, BluetoothService>();
 		builder.Services.AddSingleton<ILocationService, LocationService>();
 
 #if ANDROID
@@ -32,10 +31,15 @@ public static class MauiProgram
 #endif
 
 #if WEAR_OS
-		// Wear OS: register the minimal watch UI only — no settings or scan pages
+		// Wear OS: the watch acts as a BLE Peripheral (GATT Server + Advertising).
+		// The phone (companion app) is the BLE Central that connects to the watch.
+		// IBluetoothService (Plugin.BLE Central) is NOT needed on the watch side.
+		builder.Services.AddSingleton<IWearOsPeripheralService, Platforms.Android.WearOsBlePeripheralService>();
 		builder.Services.AddSingleton<WearOsViewModel>();
 		builder.Services.AddSingleton<WearOsMainPage>();
 #else
+		// Phone (companion app): BLE Central that scans for and connects to the watch.
+		builder.Services.AddSingleton<IBluetoothService, BluetoothService>();
 		// Phone (companion app): register full UI with device management and settings
 		builder.Services.AddSingleton<MainViewModel>();
 		builder.Services.AddTransient<SettingsViewModel>();

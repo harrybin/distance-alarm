@@ -45,9 +45,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[9.0.12, )",
-        "resolved": "9.0.12",
-        "contentHash": "StA3kyImQHqDo8A8ZHaSxgASbEuT5UIqgeCvK5SzUPj//xE1QSys421J9pEs4cYuIVwq7CJvWSKxtyH7aPr1LA=="
+        "requested": "[9.0.14, )",
+        "resolved": "9.0.14",
+        "contentHash": "+MeWjj5sGq6Oj/l0E9RPMgXDyCIPxczzCbGuvuVTZFEGiy2S/atsfoAoKUnkEin/GeGpN+HenCzRmiQKSc99eQ=="
       },
       "Plugin.BLE": {
         "type": "Direct",
@@ -1144,8 +1144,6 @@
         }
       }
     },
-    "net9.0-android35.0/android-arm": {},
-    "net9.0-android35.0/android-arm64": {},
-    "net9.0-android35.0/android-x64": {}
+    "net9.0-android35.0/android-arm": {}
   }
 }

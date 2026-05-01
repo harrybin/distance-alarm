@@ -13,8 +13,10 @@
             
             <!-- Value Converters -->
             <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+            <converters:IsNullConverter x:Key="IsNullConverter" />
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+            <converters:BoolToMonitoringTextConverter x:Key="BoolToMonitoringTextConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
