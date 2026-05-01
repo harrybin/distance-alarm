@@ -195,7 +195,11 @@ public class WearOsBlePeripheralService : IWearOsPeripheralService, IDisposable
         try
         {
             var settings = new AdvertiseSettings.Builder()
-                .SetAdvertiseMode(AdvertiseMode.Balanced)   // Battery-balanced advertising
+                // Balanced mode: saves battery while still being discoverable in a reasonable
+                // time (<2 s when phone is actively scanning).  LowLatency is appropriate for
+                // scanning (EnhancedBleScanner) but would drain the watch battery if used for
+                // continuous advertising here.
+                .SetAdvertiseMode(AdvertiseMode.Balanced)
                 .SetConnectable(true)                        // Must be connectable for phone to connect
                 .SetTimeout(0)                               // Advertise indefinitely
                 .Build();

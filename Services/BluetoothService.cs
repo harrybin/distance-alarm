@@ -275,6 +275,8 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
     /// <summary>
     /// Pushes the current alarm settings to the connected watch by writing to the
     /// Settings GATT characteristic.  No-op if the watch GATT service is not found.
+    /// Retries service discovery up to 5 times with incremental back-off instead of
+    /// a fixed sleep, to avoid relying on an arbitrary delay after connection.
     /// </summary>
     public async Task PushSettingsToDeviceAsync(AlarmSettings settings)
     {
@@ -283,16 +285,23 @@ public class BluetoothService : IBluetoothService, IBluetoothServiceConfiguratio
 
         try
         {
-            // Short delay to let GATT service discovery complete after connection
-            await Task.Delay(1500);
+            // Poll for the service with exponential back-off: Plugin.BLE triggers GATT
+            // service discovery when GetServiceAsync is called; the first call may return
+            // null if discovery has not completed yet.
+            Plugin.BLE.Abstractions.Contracts.IService? service = null;
+            for (int attempt = 0; attempt < 5 && service == null; attempt++)
+            {
+                if (attempt > 0)
+                    await Task.Delay(500 * attempt);
 
-            var service = await _connectedDevice.GetServiceAsync(
-                Guid.Parse(AppConstants.WatchServiceUuid));
+                service = await _connectedDevice.GetServiceAsync(
+                    Guid.Parse(AppConstants.WatchServiceUuid));
+            }
 
             if (service == null)
             {
                 System.Diagnostics.Debug.WriteLine(
-                    "BluetoothService.PushSettingsToDeviceAsync: watch service not found");
+                    "BluetoothService.PushSettingsToDeviceAsync: watch service not found after retries");
                 return;
             }
 

@@ -11,7 +11,8 @@ public interface IWearOsPeripheralService
 {
     /// <summary>
     /// Raised on the calling thread when the companion phone connects.
-    /// The event argument is the phone's Bluetooth address.
+    /// The event argument is the phone's display name, or its Bluetooth address as a fallback
+    /// when the device name is not available.
     /// </summary>
     event EventHandler<string> PhoneConnected;
 

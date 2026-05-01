@@ -46,9 +46,9 @@ public partial class WearOsViewModel : ObservableObject
         IAlarmService alarmService,
         IBackgroundService? backgroundService = null)
     {
-        _peripheralService  = peripheralService;
-        _alarmService       = alarmService;
-        _backgroundService  = backgroundService;
+        _peripheralService = peripheralService;
+        _alarmService      = alarmService;
+        _backgroundService = backgroundService;
 
         _peripheralService.PhoneConnected    += OnPhoneConnected;
         _peripheralService.PhoneDisconnected += OnPhoneDisconnected;
